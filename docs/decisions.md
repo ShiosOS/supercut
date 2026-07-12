@@ -101,12 +101,21 @@ running; spend says someone kept paying for it. Together the admission thesis
 becomes "ran a long time with real money behind it", which the playbook
 methodology states in plain words.
 
-## Shares weigh more than plays in the study score
+## Engagement is a rate, not a count
 
-**Choice:** the engagement component now ranks by plays plus 100× shares
-(`SHARE_WORTH_IN_PLAYS`). A play is often an accident of the feed; a share is
-a deliberate endorsement of the creative. The multiplier is printed in every
-playbook footnote so the ranking stays inspectable.
+**Choice:** the study score's engagement component is likes-plus-weighted-
+shares per play (`SHARE_WORTH_IN_LIKES` = 5, because passing an ad on is a
+stronger endorsement than tapping like), with a 10k-plays floor
+(`MIN_PLAYS_FOR_ENGAGEMENT_RATE`) below which the rate is treated as zero.
+
+**Why:** plays on a paid ad are bought — raw counts mostly measure budget,
+so ranking on them would crown the biggest spenders, not the best creative.
+A rate asks what viewers did once the ad reached them. The floor exists
+because tiny denominators produce fake-high rates (180 likes on 200 plays).
+Ads with no play data — common on Facebook — score zero on engagement and
+rank on longevity and label confidence alone. Raw plays stay visible in the
+playbook for context; they just don't drive the ranking. The formula is
+printed in every playbook footnote so the ranking stays inspectable.
 
 ## The detail endpoint: wired for exemplar permalinks only
 

@@ -91,6 +91,13 @@ export const STUDY_SCORE_WEIGHTS = {
   formatConfidence: 0.2,
 } as const;
 
-/** Inside the engagement component, one share counts as this many plays.
- * Passing a creative on is a deliberate endorsement; being watched is not. */
-export const SHARE_WORTH_IN_PLAYS = 100;
+/** Engagement is a RATE (likes and shares per play), because plays on paid
+ * ads are bought — raw counts mostly measure budget, not creative quality. */
+
+/** Inside the engagement rate, one share counts as this many likes.
+ * Passing a creative on is a deliberate endorsement; a like is a tap. */
+export const SHARE_WORTH_IN_LIKES = 5;
+
+/** Below this many plays a rate is noise (10 likes on 200 plays would beat
+ * everything), so such ads score zero on engagement and rank on the rest. */
+export const MIN_PLAYS_FOR_ENGAGEMENT_RATE = 10_000;

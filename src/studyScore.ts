@@ -3,7 +3,11 @@
 // "examples that lasted" lists. Weights live in constants.ts and are printed
 // verbatim in the playbook footnote.
 
-import { SHARE_WORTH_IN_PLAYS, STUDY_SCORE_WEIGHTS } from "./constants";
+import {
+  MIN_PLAYS_FOR_ENGAGEMENT_RATE,
+  SHARE_WORTH_IN_LIKES,
+  STUDY_SCORE_WEIGHTS,
+} from "./constants";
 import type { Ad } from "./ad";
 import type { AdFacts } from "./tally";
 
@@ -19,16 +23,12 @@ const CONFIDENCE_VALUE = { high: 1, medium: 0.6, low: 0.3 } as const;
 /** Scores every ad relative to the pool it sits in, best first. */
 export function scoreAds(pool: AdFacts[]): StudyScore[] {
   const maxDays = Math.max(...pool.map((facts) => facts.ad.daysRunning), 1);
-  // log10 tames the heavy tail: 10M plays should not drown 100k entirely.
-  const maxLogEngagement = Math.max(
-    ...pool.map((facts) => Math.log10(engagementSignal(facts.ad) + 1)),
-    1,
-  );
+  const maxRate = Math.max(...pool.map((facts) => engagementRate(facts.ad)), Number.MIN_VALUE);
 
   const scored = pool.map((facts): StudyScore => {
     const components = {
       longevity: facts.ad.daysRunning / maxDays,
-      engagement: Math.log10(engagementSignal(facts.ad) + 1) / maxLogEngagement,
+      engagement: engagementRate(facts.ad) / maxRate,
       formatConfidence: CONFIDENCE_VALUE[facts.factSheet.formatConfidence],
     };
     const score =
@@ -41,10 +41,13 @@ export function scoreAds(pool: AdFacts[]): StudyScore[] {
   return scored.sort((a, b) => b.score - a.score);
 }
 
-/** Plays plus shares, with each share counted as many plays: sharing is a
- * deliberate endorsement of the creative, watching is often an accident. */
-function engagementSignal(ad: Ad): number {
-  return ad.playCount + ad.shareCount * SHARE_WORTH_IN_PLAYS;
+/** Likes and shares per play, shares weighted heavier. A rate, not a count:
+ * plays on paid ads are bought, so raw counts mostly measure budget. Ads
+ * below the plays floor (or with no play data, common on Facebook) score
+ * zero here and rank on longevity and label confidence alone. */
+function engagementRate(ad: Ad): number {
+  if (ad.playCount < MIN_PLAYS_FOR_ENGAGEMENT_RATE) return 0;
+  return (ad.likeCount + ad.shareCount * SHARE_WORTH_IN_LIKES) / ad.playCount;
 }
 
 /** Top ads for a frame strip or example list: best scores first, but at most

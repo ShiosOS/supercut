@@ -2,7 +2,7 @@
 // read from file://, email, or print. All numbers come straight from the
 // Tally; the model's prose only ever sits next to a count that code produced.
 
-import { SHARE_WORTH_IN_PLAYS } from "../constants";
+import { MIN_PLAYS_FOR_ENGAGEMENT_RATE, SHARE_WORTH_IN_LIKES } from "../constants";
 import type { PlaybookProse } from "../explain";
 import type { QaReport } from "../qa";
 import type { Tally } from "../tally";
@@ -92,7 +92,7 @@ ${Object.entries(input.studyScoreWeights)
   .map(([name, weight]) => `${name} ×${weight}`)
   .join(" + ")},
 each part normalized within this pool, with at most one ad per brand in any list.
-Inside the engagement part, one share counts as ${SHARE_WORTH_IN_PLAYS} plays — passing an ad on is a deliberate endorsement, being watched often is not.</p>
+Engagement is measured as a rate — likes and shares per play, a share counting ${SHARE_WORTH_IN_LIKES}× a like — because plays on a paid ad are bought, so raw counts would mostly rank budgets. Rates from under ${MIN_PLAYS_FOR_ENGAGEMENT_RATE.toLocaleString("en-US")} plays are ignored as noise.</p>
 <p>Made with Supercut. Days-running and play counts come from the ad library data; "still delivering" means seen in the last 30 days, the closest signal the data offers to "currently live".</p>
 </footer>
 </main></body></html>`;
