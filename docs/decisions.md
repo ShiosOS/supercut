@@ -225,6 +225,19 @@ trustworthy and fine enough to matter (the first 3 seconds are the scroll-stop
 window). Mechanical facts that need precision — cut counts in the first 10
 seconds — come from ffmpeg scene detection, not the model.
 
+## The watch phase runs in parallel
+
+**Choice:** ads are watched 16 at a time (`WATCH_CONCURRENCY`), and the six
+search pulls run at once. The watch step is network-bound — the model call
+dominates at several seconds per ad — so a sequential scan took 15–25 minutes
+while doing almost no local work. Parallel, a fresh scan finishes in about a
+minute; ffmpeg's per-ad work is brief enough that 4 cores keep up.
+
+**Consequence:** the per-ad mechanicals cache became a shared in-memory map
+that the entrypoint loads and persists once per run. Sixteen tasks doing
+read-modify-write on one JSON file would corrupt it; sixteen tasks mutating
+one Map on a single-threaded event loop cannot.
+
 ## Videos are transient
 
 **Choice:** each video is streamed to a temp file, fingerprinted, frame-grabbed,

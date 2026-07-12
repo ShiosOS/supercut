@@ -1,11 +1,13 @@
 // The per-ad watch step: download the video once, and in that one window
 // fingerprint it, count cuts, grab hook frames, and run the questionnaire.
-// The video is deleted before the next ad; everything derived is cached so a
-// re-run never downloads or re-describes an ad it has already seen.
+// The video is deleted when done; everything derived is cached so a re-run
+// never downloads or re-describes an ad it has already seen. Ads are watched
+// in parallel, so mechanicals live in a shared in-memory map the entrypoint
+// loads and persists once — no concurrent read-modify-write on one file.
 
 import type { Ad } from "./ad";
 import { MAX_VIDEO_MEGABYTES, MAX_VIDEO_SECONDS, SCENE_CUT_THRESHOLD } from "./constants";
-import { dataPaths, readJsonIfExists, writeJson } from "./dataDir";
+import { dataPaths } from "./dataDir";
 import { describeAd, readCachedFactSheet } from "./describe";
 import {
   countCutsFirst10s,
@@ -21,7 +23,7 @@ export type WatchOutcome =
   | { status: "watched"; facts: AdFacts; fingerprint: Fingerprint }
   | { status: "skipped"; adId: string; brand: string; reason: string };
 
-interface Mechanicals {
+export interface Mechanicals {
   fingerprint: Fingerprint;
   measuredCutsFirst10s: number;
   /** Cut counts depend on the detection threshold; a cached count measured
@@ -29,9 +31,13 @@ interface Mechanicals {
   sceneCutThreshold: number;
 }
 
-type MechanicalsFile = Record<string, Mechanicals>;
+export type MechanicalsCache = Map<string, Mechanicals>;
 
-export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
+export async function watchAd(
+  market: string,
+  ad: Ad,
+  mechanicalsCache: MechanicalsCache,
+): Promise<WatchOutcome> {
   if (ad.durationSeconds > MAX_VIDEO_SECONDS) {
     return skipped(
       ad,
@@ -39,7 +45,7 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
     );
   }
 
-  const cached = await readFromCache(market, ad);
+  const cached = await readFromCache(market, ad, mechanicalsCache);
   if (cached) return cached;
 
   try {
@@ -62,7 +68,7 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
       const measuredCutsFirst10s = await countCutsFirst10s(videoPath);
       await extractHookFrames(videoPath, (index) => dataPaths.hookFrame(market, ad.id, index));
       const factSheet = await describeAd(market, ad, videoPath);
-      await saveMechanicals(market, ad.id, {
+      mechanicalsCache.set(ad.id, {
         fingerprint,
         measuredCutsFirst10s,
         sceneCutThreshold: SCENE_CUT_THRESHOLD,
@@ -80,28 +86,20 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
   }
 }
 
-async function readFromCache(market: string, ad: Ad): Promise<WatchOutcome | null> {
+async function readFromCache(
+  market: string,
+  ad: Ad,
+  mechanicalsCache: MechanicalsCache,
+): Promise<WatchOutcome | null> {
   const factSheet = await readCachedFactSheet(market, ad.id);
   if (!factSheet) return null;
-  const mechanicalsFile = await readJsonIfExists<MechanicalsFile>(dataPaths.mechanicals(market));
-  const mechanicals = mechanicalsFile?.[ad.id];
+  const mechanicals = mechanicalsCache.get(ad.id);
   if (!mechanicals || mechanicals.sceneCutThreshold !== SCENE_CUT_THRESHOLD) return null;
   return {
     status: "watched",
     facts: { ad, factSheet, measuredCutsFirst10s: mechanicals.measuredCutsFirst10s },
     fingerprint: mechanicals.fingerprint,
   };
-}
-
-async function saveMechanicals(
-  market: string,
-  adId: string,
-  mechanicals: Mechanicals,
-): Promise<void> {
-  const path = dataPaths.mechanicals(market);
-  const file = (await readJsonIfExists<MechanicalsFile>(path)) ?? {};
-  file[adId] = mechanicals;
-  await writeJson(path, file);
 }
 
 function skipped(ad: Ad, reason: string): WatchOutcome {

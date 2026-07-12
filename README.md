@@ -37,7 +37,7 @@ pool ("34 of 39 ads show the product in the first 3 seconds").
 bun install
 cp .env.example .env   # add PIPISPY_API_KEY and OPENROUTER_API_KEY
 
-bun run scan coffee    # writes examples/coffee.html (20–60 min, ~200 API credits)
+bun run scan coffee    # writes examples/coffee.html (~1–2 min, ~240 API credits)
 bun run dev            # web app: browse playbooks, start scans, generate brand briefs
 ```
 

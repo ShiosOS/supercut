@@ -32,6 +32,11 @@ export const MAX_ADS_SEARCHED = 240;
  * step (bandwidth + model tokens); ~70 admitted ads is plenty to count from. */
 export const MAX_ADS_WATCHED = 70;
 
+/** Ads watched in parallel. The watch phase is network-bound (the model call
+ * dominates), so this is what holds a scan to about a minute; ffmpeg's work
+ * per ad is brief enough that 4 cores keep up. */
+export const WATCH_CONCURRENCY = 16;
+
 /** Videos longer than this are skipped: they cost disproportionately and are
  * rarely the repeatable paid-social unit this tool studies. */
 export const MAX_VIDEO_SECONDS = 180;

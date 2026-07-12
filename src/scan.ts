@@ -11,9 +11,11 @@ import {
   MIN_ADS_FOR_CHAPTER,
   MIN_ADS_FOR_PLAYBOOK,
   STUDY_SCORE_WEIGHTS,
+  WATCH_CONCURRENCY,
 } from "./constants";
 import { generateBrandBrief } from "./brief";
-import { dataPaths, marketSlug, writeJson } from "./dataDir";
+import { mapWithConcurrency } from "./concurrency";
+import { dataPaths, marketSlug, readJsonIfExists, writeJson } from "./dataDir";
 import { capPerBrand, dedupeCreatives } from "./dedupe";
 import { buildExemplarsByFormat } from "./exemplars";
 import { explainTally } from "./explain";
@@ -25,7 +27,7 @@ import { renderBriefBlock } from "./render/briefBlock";
 import { renderPlaybook } from "./render/playbook";
 import { buildTally } from "./tally";
 import { triageByMetadata } from "./triage";
-import { watchAd } from "./watchAd";
+import { watchAd, type Mechanicals, type MechanicalsCache } from "./watchAd";
 
 const market = process.argv[2];
 const sampleBriefBrand = argValue("--sample-brief");
@@ -50,22 +52,34 @@ try {
   // still judges every watched ad from the video itself.
   const ordered = await triageByMetadata(market, candidates);
   const toWatch = ordered.slice(0, MAX_ADS_WATCHED);
-  const watched: Extract<Awaited<ReturnType<typeof watchAd>>, { status: "watched" }>[] = [];
-  const skips: { adId: string; brand: string; reason: string }[] = [];
-  for (const [index, ad] of toWatch.entries()) {
+
+  // Ads are watched in parallel; the mechanicals cache is loaded once here,
+  // filled in memory, and persisted once after the phase.
+  const mechanicalsCache: MechanicalsCache = new Map(
+    Object.entries(
+      (await readJsonIfExists<Record<string, Mechanicals>>(dataPaths.mechanicals(market))) ?? {},
+    ),
+  );
+  let completed = 0;
+  await progress("watching", `watching ${toWatch.length} ads`, 0, toWatch.length);
+  const outcomesByAd = await mapWithConcurrency(toWatch, WATCH_CONCURRENCY, async (ad) => {
+    const outcome = await watchAd(market, ad, mechanicalsCache);
+    completed += 1;
     await progress(
       "watching",
-      `watching ad ${index + 1} of ${toWatch.length}`,
-      index,
+      `watched ${completed} of ${toWatch.length} ads`,
+      completed,
       toWatch.length,
     );
-    const outcome = await watchAd(market, ad);
-    if (outcome.status === "watched") watched.push(outcome);
-    else {
-      skips.push(outcome);
-      console.log(`  skip ${ad.id} (${ad.brand}): ${outcome.reason}`);
-    }
-  }
+    return outcome;
+  });
+  await writeJson(dataPaths.mechanicals(market), Object.fromEntries(mechanicalsCache));
+
+  const watched = outcomesByAd.flatMap((outcome) =>
+    outcome.status === "watched" ? [outcome] : [],
+  );
+  const skips = outcomesByAd.flatMap((outcome) => (outcome.status === "skipped" ? [outcome] : []));
+  for (const skip of skips) console.log(`  skip ${skip.adId} (${skip.brand}): ${skip.reason}`);
   console.log(`watched: ${watched.length}, skipped: ${skips.length}`);
 
   const uniqueCreatives = dedupeCreatives(

@@ -57,7 +57,7 @@ export function ProgressWatcher({ slug }: { slug: string }) {
         </p>
       )}
       <p className="text-xs text-stone-400">
-        A full scan takes 20–60 minutes. You can close this page; the scan keeps going.
+        A full scan takes about a minute. You can close this page; the scan keeps going.
       </p>
     </div>
   );
