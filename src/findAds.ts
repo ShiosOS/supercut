@@ -47,9 +47,12 @@ export async function findAds(market: string): Promise<FindAdsResult> {
     { keyword: market, keywordType: 1, sort: SORT.deliveryDays, ...shared },
     { keyword: market, keywordType: 1, sort: SORT.lastFound, ...shared },
     { keyword: market, keywordType: 1, sort: SORT.adSpend, ...shared },
-    ...subKeywords.map(
-      (keyword): SearchParams => ({ keyword, keywordType: 5, sort: SORT.engagement, ...shared }),
-    ),
+    ...subKeywords.map((keyword): SearchParams => ({
+      keyword,
+      keywordType: 5,
+      sort: SORT.engagement,
+      ...shared,
+    })),
   ];
 
   const seen = new Map<string, Ad>();

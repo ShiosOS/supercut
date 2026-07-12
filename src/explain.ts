@@ -30,7 +30,9 @@ const chapterProseSchema = z.object({
 const testRecommendationSchema = z.object({
   title: z.string(),
   hypothesis: z.string().describe("One sentence: if we do X, we expect Y."),
-  justification: z.string().describe("The counted regularity or gap this test rests on, with its numbers."),
+  justification: z
+    .string()
+    .describe("The counted regularity or gap this test rests on, with its numbers."),
   winMetric: z.string().describe("The single metric that decides the test."),
   shotNotes: z.array(z.string()).describe("3-5 concrete production notes."),
   risk: z.string().describe("The most likely way this test fails."),

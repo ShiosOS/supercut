@@ -5,7 +5,13 @@
 // between comes from plain code.
 
 import path from "node:path";
-import { MAX_ADS_PER_BRAND, MAX_ADS_WATCHED, MIN_ADS_FOR_CHAPTER, MIN_ADS_FOR_PLAYBOOK, STUDY_SCORE_WEIGHTS } from "./constants";
+import {
+  MAX_ADS_PER_BRAND,
+  MAX_ADS_WATCHED,
+  MIN_ADS_FOR_CHAPTER,
+  MIN_ADS_FOR_PLAYBOOK,
+  STUDY_SCORE_WEIGHTS,
+} from "./constants";
 import { generateBrandBrief } from "./brief";
 import { dataPaths, marketSlug, writeJson } from "./dataDir";
 import { capPerBrand, dedupeCreatives } from "./dedupe";
@@ -28,8 +34,12 @@ if (!market || market.startsWith("--")) {
   process.exit(1);
 }
 
-const progress = (stage: Parameters<typeof writeProgress>[0]["stage"], detail: string, watched = 0, toWatch = 0) =>
-  writeProgress({ market, stage, detail, watched, toWatch, updatedAt: "" });
+const progress = (
+  stage: Parameters<typeof writeProgress>[0]["stage"],
+  detail: string,
+  watched = 0,
+  toWatch = 0,
+) => writeProgress({ market, stage, detail, watched, toWatch, updatedAt: "" });
 
 try {
   await progress("searching", "pulling candidate ads from the ad library");
@@ -43,7 +53,12 @@ try {
   const watched: Extract<Awaited<ReturnType<typeof watchAd>>, { status: "watched" }>[] = [];
   const skips: { adId: string; brand: string; reason: string }[] = [];
   for (const [index, ad] of toWatch.entries()) {
-    await progress("watching", `watching ad ${index + 1} of ${toWatch.length}`, index, toWatch.length);
+    await progress(
+      "watching",
+      `watching ad ${index + 1} of ${toWatch.length}`,
+      index,
+      toWatch.length,
+    );
     const outcome = await watchAd(market, ad);
     if (outcome.status === "watched") watched.push(outcome);
     else {
@@ -53,13 +68,26 @@ try {
   }
   console.log(`watched: ${watched.length}, skipped: ${skips.length}`);
 
-  const uniqueCreatives = dedupeCreatives(watched.map(({ facts, fingerprint }) => ({ ad: facts.ad, fingerprint })));
-  const cappedAds = capPerBrand(uniqueCreatives.map((entry) => entry.ad), MAX_ADS_PER_BRAND);
+  const uniqueCreatives = dedupeCreatives(
+    watched.map(({ facts, fingerprint }) => ({ ad: facts.ad, fingerprint })),
+  );
+  const cappedAds = capPerBrand(
+    uniqueCreatives.map((entry) => entry.ad),
+    MAX_ADS_PER_BRAND,
+  );
   const keptIds = new Set(cappedAds.map((ad) => ad.id));
-  const outcomes = watched.filter((entry) => keptIds.has(entry.facts.ad.id)).map((entry) => applyRelevanceGate(entry.facts));
-  const pool = outcomes.flatMap((outcome) => (outcome.status === "admitted" ? [outcome.facts] : []));
-  const rejections = outcomes.flatMap((outcome) => (outcome.status === "rejected" ? [outcome] : []));
-  console.log(`after dedupe + brand cap: ${keptIds.size}; relevance gate kept ${pool.length}, rejected ${rejections.length}`);
+  const outcomes = watched
+    .filter((entry) => keptIds.has(entry.facts.ad.id))
+    .map((entry) => applyRelevanceGate(entry.facts));
+  const pool = outcomes.flatMap((outcome) =>
+    outcome.status === "admitted" ? [outcome.facts] : [],
+  );
+  const rejections = outcomes.flatMap((outcome) =>
+    outcome.status === "rejected" ? [outcome] : [],
+  );
+  console.log(
+    `after dedupe + brand cap: ${keptIds.size}; relevance gate kept ${pool.length}, rejected ${rejections.length}`,
+  );
 
   if (pool.length < MIN_ADS_FOR_PLAYBOOK) {
     throw new Error(
@@ -73,10 +101,19 @@ try {
 
   await progress("explaining", "writing chapters from the counted patterns");
   const prose = await explainTally(market, tally, qa);
-  await writeJson(dataPaths.tallies(market), { market, generatedAt: new Date().toISOString(), tally, qa, prose });
+  await writeJson(dataPaths.tallies(market), {
+    market,
+    generatedAt: new Date().toISOString(),
+    tally,
+    qa,
+    prose,
+  });
 
   const sampleBriefHtml = sampleBriefBrand
-    ? renderBriefBlock(sampleBriefBrand, await generateBrandBrief(market, sampleBriefBrand, tally, prose))
+    ? renderBriefBlock(
+        sampleBriefBrand,
+        await generateBrandBrief(market, sampleBriefBrand, tally, prose),
+      )
     : undefined;
 
   await progress("rendering", "assembling the playbook");
@@ -105,7 +142,15 @@ try {
   console.log(`done: ${outputPath} (${(html.length / 1024 / 1024).toFixed(2)} MB)`);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  await writeProgress({ market, stage: "failed", detail: "scan failed", watched: 0, toWatch: 0, error: message, updatedAt: "" });
+  await writeProgress({
+    market,
+    stage: "failed",
+    detail: "scan failed",
+    watched: 0,
+    toWatch: 0,
+    error: message,
+    updatedAt: "",
+  });
   console.error(`scan failed: ${message}`);
   process.exit(1);
 }

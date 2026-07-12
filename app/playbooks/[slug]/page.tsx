@@ -26,8 +26,8 @@ export default async function PlaybookPage({ params }: { params: Promise<{ slug:
       <section className="rounded-lg border border-stone-200 bg-white p-6">
         <h2 className="text-lg font-bold">Make it about your brand</h2>
         <p className="mt-1 text-sm text-stone-600">
-          One sentence about your brand and product, and the three tests above get
-          rewritten for it — using only the patterns this scan counted.
+          One sentence about your brand and product, and the three tests above get rewritten for it
+          — using only the patterns this scan counted.
         </p>
         <BriefForm market={slug} />
       </section>

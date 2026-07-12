@@ -88,10 +88,7 @@ export function buildTally(pool: AdFacts[], minAdsForChapter: number): Tally {
   };
 }
 
-function tallyFormat(
-  formatLabel: FactSheet["formatLabel"],
-  members: AdFacts[],
-): FormatTally {
+function tallyFormat(formatLabel: FactSheet["formatLabel"], members: AdFacts[]): FormatTally {
   return {
     formatLabel,
     adIds: members.map((facts) => facts.ad.id),

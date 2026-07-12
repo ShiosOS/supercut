@@ -13,7 +13,13 @@ const LIST_URI = "/v3/api/open/adspy/list";
 /** Sort orders the list endpoint accepts. Each one is a different bias, so
  * findAds pulls several and dedupes rather than trusting any single ranking.
  * adSpend ranks by the provider's spend estimate — money, not just attention. */
-export const SORT = { lastFound: 1, plays: 4, deliveryDays: 5, engagement: 6, adSpend: 21 } as const;
+export const SORT = {
+  lastFound: 1,
+  plays: 4,
+  deliveryDays: 5,
+  engagement: 6,
+  adSpend: 21,
+} as const;
 
 export interface SearchParams {
   keyword: string;
@@ -38,10 +44,7 @@ const responseSchema = z.object({
 
 /** Searches PipiSpy for video ads, serving from the disk cache when the same
  * params were pulled before. Returns raw items; ad.ts maps them to Ads. */
-export async function searchAds(
-  market: string,
-  params: SearchParams,
-): Promise<PipiSpyItem[]> {
+export async function searchAds(market: string, params: SearchParams): Promise<PipiSpyItem[]> {
   const body = {
     key: requireApiKey(),
     uri: LIST_URI,
@@ -63,10 +66,7 @@ export async function searchAds(
   };
 
   // Cache key covers everything except the API key.
-  const hash = createHash("sha256")
-    .update(JSON.stringify(body.params))
-    .digest("hex")
-    .slice(0, 16);
+  const hash = createHash("sha256").update(JSON.stringify(body.params)).digest("hex").slice(0, 16);
   const cachePath = dataPaths.searchCache(market, hash);
 
   const cached = await readJsonIfExists<{ items: unknown[] }>(cachePath);

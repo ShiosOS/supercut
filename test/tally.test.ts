@@ -25,9 +25,7 @@ describe("buildTally", () => {
   test("counts carry the contributing ad ids as receipts", () => {
     const tally = buildTally(pool, 3);
     const demoChapter = tally.formats.find((f) => f.formatLabel === "product demo");
-    const early = demoChapter?.productOnScreen.counts.find(
-      (c) => c.label === "first 3 seconds",
-    );
+    const early = demoChapter?.productOnScreen.counts.find((c) => c.label === "first 3 seconds");
     expect(early?.count).toBe(2);
     expect(early?.adIds.sort()).toEqual(["d1", "d2"]);
   });
@@ -35,9 +33,7 @@ describe("buildTally", () => {
   test("formats below the chapter minimum go to smallFormats, not chapters", () => {
     const tally = buildTally(pool, 3);
     expect(tally.formats.map((f) => f.formatLabel)).toEqual(["product demo"]);
-    expect(tally.smallFormats).toEqual([
-      { formatLabel: "creator testimonial", adIds: ["t1"] },
-    ]);
+    expect(tally.smallFormats).toEqual([{ formatLabel: "creator testimonial", adIds: ["t1"] }]);
   });
 
   test("chapter medians come from the pool's real values", () => {

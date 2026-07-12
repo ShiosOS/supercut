@@ -22,13 +22,11 @@ export default function HomePage() {
   return (
     <div className="space-y-10">
       <section>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Type a market. Get the playbook.
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Type a market. Get the playbook.</h1>
         <p className="mt-3 max-w-xl text-stone-600">
-          Supercut studies the paid social video ads that kept running when the rest got
-          killed, counts what they keep doing, and writes it up with the footage to prove
-          it — plus three tests to run next.
+          Supercut studies the paid social video ads that kept running when the rest got killed,
+          counts what they keep doing, and writes it up with the footage to prove it — plus three
+          tests to run next.
         </p>
       </section>
 
@@ -63,8 +61,8 @@ export default function HomePage() {
         </h2>
         <ScanForm />
         <p className="mt-3 text-sm text-stone-500">
-          A scan pulls ~200 ads, watches up to 70 videos, and takes 20–60 minutes.
-          Needs PIPISPY_API_KEY and OPENROUTER_API_KEY in .env.
+          A scan pulls ~200 ads, watches up to 70 videos, and takes 20–60 minutes. Needs
+          PIPISPY_API_KEY and OPENROUTER_API_KEY in .env.
         </p>
       </section>
     </div>

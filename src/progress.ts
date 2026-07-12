@@ -6,14 +6,7 @@ import { dataPaths, readJsonIfExists, writeJson } from "./dataDir";
 
 export interface ScanProgress {
   market: string;
-  stage:
-    | "searching"
-    | "watching"
-    | "counting"
-    | "explaining"
-    | "rendering"
-    | "done"
-    | "failed";
+  stage: "searching" | "watching" | "counting" | "explaining" | "rendering" | "done" | "failed";
   detail: string;
   watched: number;
   toWatch: number;

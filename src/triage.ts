@@ -54,11 +54,14 @@ export async function triageByMetadata(market: string, candidates: Ad[]): Promis
     });
     guesses = new Map(result.guesses.map((entry) => [entry.adId, entry.guess]));
   } catch (error) {
-    console.error(`  triage failed, keeping original order: ${error instanceof Error ? error.message : error}`);
+    console.error(
+      `  triage failed, keeping original order: ${error instanceof Error ? error.message : error}`,
+    );
     return candidates;
   }
 
   return [...candidates].sort(
-    (a, b) => GUESS_ORDER[guesses.get(a.id) ?? "unsure"] - GUESS_ORDER[guesses.get(b.id) ?? "unsure"],
+    (a, b) =>
+      GUESS_ORDER[guesses.get(a.id) ?? "unsure"] - GUESS_ORDER[guesses.get(b.id) ?? "unsure"],
   );
 }

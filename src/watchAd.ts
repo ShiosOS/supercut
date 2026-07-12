@@ -33,7 +33,10 @@ type MechanicalsFile = Record<string, Mechanicals>;
 
 export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
   if (ad.durationSeconds > MAX_VIDEO_SECONDS) {
-    return skipped(ad, `video is ${Math.round(ad.durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`);
+    return skipped(
+      ad,
+      `video is ${Math.round(ad.durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`,
+    );
   }
 
   const cached = await readFromCache(market, ad);
@@ -43,11 +46,17 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
     return await withVideo(ad.videoUrl, async (videoPath) => {
       const durationSeconds = await probeDuration(videoPath);
       if (durationSeconds > MAX_VIDEO_SECONDS) {
-        return skipped(ad, `video is ${Math.round(durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`);
+        return skipped(
+          ad,
+          `video is ${Math.round(durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`,
+        );
       }
       const megabytes = (await Bun.file(videoPath).bytes()).length / 1024 / 1024;
       if (megabytes > MAX_VIDEO_MEGABYTES) {
-        return skipped(ad, `video file is ${megabytes.toFixed(0)}MB, over the ${MAX_VIDEO_MEGABYTES}MB limit`);
+        return skipped(
+          ad,
+          `video file is ${megabytes.toFixed(0)}MB, over the ${MAX_VIDEO_MEGABYTES}MB limit`,
+        );
       }
       const fingerprint = await fingerprintVideo(videoPath);
       const measuredCutsFirst10s = await countCutsFirst10s(videoPath);
@@ -84,7 +93,11 @@ async function readFromCache(market: string, ad: Ad): Promise<WatchOutcome | nul
   };
 }
 
-async function saveMechanicals(market: string, adId: string, mechanicals: Mechanicals): Promise<void> {
+async function saveMechanicals(
+  market: string,
+  adId: string,
+  mechanicals: Mechanicals,
+): Promise<void> {
   const path = dataPaths.mechanicals(market);
   const file = (await readJsonIfExists<MechanicalsFile>(path)) ?? {};
   file[adId] = mechanicals;

@@ -9,8 +9,16 @@ import { makeAd, makeFactSheet } from "./fixtures";
 describe("buildQaReport", () => {
   test("measures how far model cut estimates drift from ffmpeg", () => {
     const report = buildQaReport([
-      { ad: makeAd({ id: "a" }), factSheet: makeFactSheet({ estimatedCutsFirst10s: 4 }), measuredCutsFirst10s: 4 },
-      { ad: makeAd({ id: "b" }), factSheet: makeFactSheet({ estimatedCutsFirst10s: 10 }), measuredCutsFirst10s: 4 },
+      {
+        ad: makeAd({ id: "a" }),
+        factSheet: makeFactSheet({ estimatedCutsFirst10s: 4 }),
+        measuredCutsFirst10s: 4,
+      },
+      {
+        ad: makeAd({ id: "b" }),
+        factSheet: makeFactSheet({ estimatedCutsFirst10s: 10 }),
+        measuredCutsFirst10s: 4,
+      },
     ]);
     expect(report.cutEstimate.meanAbsoluteError).toBe(3);
     expect(report.cutEstimate.shareWithin2).toBe(0.5);
@@ -19,7 +27,11 @@ describe("buildQaReport", () => {
   test("lists ads whose format label the model was unsure of", () => {
     const report = buildQaReport([
       { ad: makeAd({ id: "sure" }), factSheet: makeFactSheet(), measuredCutsFirst10s: 4 },
-      { ad: makeAd({ id: "unsure" }), factSheet: makeFactSheet({ formatConfidence: "low" }), measuredCutsFirst10s: 4 },
+      {
+        ad: makeAd({ id: "unsure" }),
+        factSheet: makeFactSheet({ formatConfidence: "low" }),
+        measuredCutsFirst10s: 4,
+      },
     ]);
     expect(report.lowConfidenceFormatAdIds).toEqual(["unsure"]);
   });
@@ -27,7 +39,10 @@ describe("buildQaReport", () => {
   test("corroborates spoken hook quotes against the provider transcript", () => {
     const report = buildQaReport([
       {
-        ad: makeAd({ id: "match", providerTranscript: "this is the SMOOTHEST cold brew ever, trust me" }),
+        ad: makeAd({
+          id: "match",
+          providerTranscript: "this is the SMOOTHEST cold brew ever, trust me",
+        }),
         factSheet: makeFactSheet({ spokenHookQuote: "This is the smoothest cold brew ever" }),
         measuredCutsFirst10s: 4,
       },

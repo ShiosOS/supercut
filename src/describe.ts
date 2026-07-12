@@ -11,10 +11,7 @@ import { chatJson } from "./openrouter";
 
 /** Returns the cached questionnaire for this ad, or null if it must be
  * (re)described — because it was never described or the schema moved on. */
-export async function readCachedFactSheet(
-  market: string,
-  adId: string,
-): Promise<FactSheet | null> {
+export async function readCachedFactSheet(market: string, adId: string): Promise<FactSheet | null> {
   const stored = await readJsonIfExists<StoredFactSheet>(dataPaths.factSheet(market, adId));
   if (!stored || stored._schemaVersion !== FACT_SHEET_SCHEMA_VERSION) return null;
   const parsed = factSheetSchema.safeParse(stored.factSheet);
@@ -22,11 +19,7 @@ export async function readCachedFactSheet(
 }
 
 /** Watches one downloaded video and fills out the questionnaire. */
-export async function describeAd(
-  market: string,
-  ad: Ad,
-  videoPath: string,
-): Promise<FactSheet> {
+export async function describeAd(market: string, ad: Ad, videoPath: string): Promise<FactSheet> {
   const videoBytes = await Bun.file(videoPath).bytes();
   const videoDataUrl = `data:video/mp4;base64,${Buffer.from(videoBytes).toString("base64")}`;
 

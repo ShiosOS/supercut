@@ -8,10 +8,26 @@ import { makeAd, makeFingerprint } from "./fixtures";
 describe("dedupeCreatives", () => {
   test("keeps distinct creatives", () => {
     const pool = [
-      { ad: makeAd({ id: "a" }), fingerprint: makeFingerprint({ sha256: "1".repeat(64), perceptualHash: "0000000000000000" }) },
-      { ad: makeAd({ id: "b" }), fingerprint: makeFingerprint({ sha256: "2".repeat(64), perceptualHash: "ffffffffffffffff" }) },
+      {
+        ad: makeAd({ id: "a" }),
+        fingerprint: makeFingerprint({
+          sha256: "1".repeat(64),
+          perceptualHash: "0000000000000000",
+        }),
+      },
+      {
+        ad: makeAd({ id: "b" }),
+        fingerprint: makeFingerprint({
+          sha256: "2".repeat(64),
+          perceptualHash: "ffffffffffffffff",
+        }),
+      },
     ];
-    expect(dedupeCreatives(pool).map((entry) => entry.ad.id).sort()).toEqual(["a", "b"]);
+    expect(
+      dedupeCreatives(pool)
+        .map((entry) => entry.ad.id)
+        .sort(),
+    ).toEqual(["a", "b"]);
   });
 
   test("collapses byte-identical videos to the longest-running ad", () => {
@@ -29,12 +45,18 @@ describe("dedupeCreatives", () => {
     const pool = [
       {
         ad: makeAd({ id: "original", daysRunning: 60 }),
-        fingerprint: makeFingerprint({ sha256: "1".repeat(64), perceptualHash: "ff00ff00ff00ff00" }),
+        fingerprint: makeFingerprint({
+          sha256: "1".repeat(64),
+          perceptualHash: "ff00ff00ff00ff00",
+        }),
       },
       {
         // One bit differs in the hash — a re-encode of the same creative.
         ad: makeAd({ id: "reupload", daysRunning: 40 }),
-        fingerprint: makeFingerprint({ sha256: "2".repeat(64), perceptualHash: "ff00ff00ff00ff01" }),
+        fingerprint: makeFingerprint({
+          sha256: "2".repeat(64),
+          perceptualHash: "ff00ff00ff00ff01",
+        }),
       },
     ];
     const kept = dedupeCreatives(pool);

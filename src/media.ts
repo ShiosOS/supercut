@@ -27,7 +27,17 @@ export async function withVideo<T>(
   const videoPath = path.join(dir, "ad.mp4");
   try {
     const proc = Bun.spawn(
-      ["curl", "--silent", "--fail", "--location", "--max-time", "120", "--output", videoPath, videoUrl],
+      [
+        "curl",
+        "--silent",
+        "--fail",
+        "--location",
+        "--max-time",
+        "120",
+        "--output",
+        videoPath,
+        videoUrl,
+      ],
       { stdout: "ignore", stderr: "ignore" },
     );
     const exitCode = await proc.exited;
@@ -59,11 +69,17 @@ export async function fingerprintVideo(videoPath: string): Promise<Fingerprint> 
  * mechanical ground truth the model's own cut estimate is QA'd against. */
 export async function countCutsFirst10s(videoPath: string): Promise<number> {
   const output = await runFfmpeg([
-    "-t", String(CUT_WINDOW_SECONDS),
-    "-i", videoPath,
-    "-vf", `select='gt(scene,${SCENE_CUT_THRESHOLD})',metadata=print:file=-`,
-    "-fps_mode", "passthrough",
-    "-f", "null", "-",
+    "-t",
+    String(CUT_WINDOW_SECONDS),
+    "-i",
+    videoPath,
+    "-vf",
+    `select='gt(scene,${SCENE_CUT_THRESHOLD})',metadata=print:file=-`,
+    "-fps_mode",
+    "passthrough",
+    "-f",
+    "null",
+    "-",
   ]);
   return output.split("\n").filter((line) => line.includes("pts_time")).length;
 }
@@ -79,12 +95,18 @@ export async function extractHookFrames(
     const destination = destinationFor(index);
     mkdirSync(path.dirname(destination), { recursive: true });
     await runFfmpeg([
-      "-ss", String(timestamp),
-      "-i", videoPath,
-      "-frames:v", "1",
-      "-vf", `scale=${HOOK_FRAME_WIDTH_PX}:-1`,
-      "-quality", String(HOOK_FRAME_WEBP_QUALITY),
-      "-y", destination,
+      "-ss",
+      String(timestamp),
+      "-i",
+      videoPath,
+      "-frames:v",
+      "1",
+      "-vf",
+      `scale=${HOOK_FRAME_WIDTH_PX}:-1`,
+      "-quality",
+      String(HOOK_FRAME_WEBP_QUALITY),
+      "-y",
+      destination,
     ]);
     if (await Bun.file(destination).exists()) written.push(destination);
   }
@@ -105,12 +127,18 @@ async function midFrameGray8x8(videoPath: string, atSeconds: number): Promise<Ui
   const rawPath = path.join(dir, "frame.raw");
   try {
     await runFfmpeg([
-      "-ss", String(atSeconds),
-      "-i", videoPath,
-      "-frames:v", "1",
-      "-vf", "scale=8:8,format=gray",
-      "-f", "rawvideo",
-      "-y", rawPath,
+      "-ss",
+      String(atSeconds),
+      "-i",
+      videoPath,
+      "-frames:v",
+      "1",
+      "-vf",
+      "scale=8:8,format=gray",
+      "-f",
+      "rawvideo",
+      "-y",
+      rawPath,
     ]);
     return await Bun.file(rawPath).bytes();
   } finally {

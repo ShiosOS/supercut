@@ -8,8 +8,7 @@ import { toJSONSchema } from "zod";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 type ContentPart =
-  | { type: "text"; text: string }
-  | { type: "video_url"; video_url: { url: string } };
+  { type: "text"; text: string } | { type: "video_url"; video_url: { url: string } };
 
 export interface ChatMessage {
   role: "system" | "user";

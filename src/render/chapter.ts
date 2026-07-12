@@ -30,7 +30,9 @@ export function renderChapter(
   const withFrames = exemplars.filter((exemplar) => exemplar.frameDataUrls.length > 0);
   const thin =
     format.adIds.length < THIN_CHAPTER_THRESHOLD
-      ? banner(`Only ${format.adIds.length} ads fit this format — read this chapter as a hint, not a rule.`)
+      ? banner(
+          `Only ${format.adIds.length} ads fit this format — read this chapter as a hint, not a rule.`,
+        )
       : "";
 
   return `<section id="chapter-${number}">
@@ -71,9 +73,7 @@ function renderExemplarRow(exemplar: ExemplarView): string {
     exemplar.estimatedSpendUsd && exemplar.estimatedSpendUsd > 0
       ? ` · ~$${compactNumber(exemplar.estimatedSpendUsd)} est. spend`
       : "";
-  const link = exemplar.adUrl
-    ? ` · <a href="${escapeHtml(exemplar.adUrl)}">watch the ad</a>`
-    : "";
+  const link = exemplar.adUrl ? ` · <a href="${escapeHtml(exemplar.adUrl)}">watch the ad</a>` : "";
   return `<div class="exemplar"><span class="who">${escapeHtml(exemplar.brand)}</span><br>
 ${quote}${exemplar.daysRunning} days live · ${compactNumber(exemplar.playCount)} plays${spend}${link}</div>`;
 }

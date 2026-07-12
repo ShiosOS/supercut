@@ -9,7 +9,11 @@ import path from "node:path";
 
 /** Lowercase, hyphenated market slug used for directory and file names. */
 export function marketSlug(market: string): string {
-  return market.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return market
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 export function marketDir(market: string): string {

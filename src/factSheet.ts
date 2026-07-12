@@ -29,9 +29,7 @@ export const HOOK_STYLES = [
 ] as const;
 
 export const factSheetSchema = z.object({
-  whatItSells: z
-    .string()
-    .describe("One sentence: the actual product or service this ad sells."),
+  whatItSells: z.string().describe("One sentence: the actual product or service this ad sells."),
   marketFit: z
     .enum(["core product", "adjacent product", "off-market"])
     .describe(
@@ -69,9 +67,7 @@ export const factSheetSchema = z.object({
     .describe("How clearly the product is shown being used."),
   ctaStyle: z.enum(["hard", "soft", "none"]),
   pacing: z.enum(["fast", "medium", "slow"]),
-  estimatedCutsFirst10s: z
-    .number()
-    .describe("Your estimate of hard cuts in the first 10 seconds."),
+  estimatedCutsFirst10s: z.number().describe("Your estimate of hard cuts in the first 10 seconds."),
   emotionalTone: z.enum([
     "energetic",
     "calm",
@@ -81,9 +77,7 @@ export const factSheetSchema = z.object({
     "sincere",
     "neutral",
   ]),
-  worksWithSoundOff: z
-    .boolean()
-    .describe("Could a viewer follow the pitch with audio muted?"),
+  worksWithSoundOff: z.boolean().describe("Could a viewer follow the pitch with audio muted?"),
   audienceCue: z
     .string()
     .describe("Who the ad seems aimed at, in a few words (e.g. 'busy parents')."),
