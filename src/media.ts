@@ -15,7 +15,10 @@ import {
   SCENE_CUT_THRESHOLD,
 } from "./constants";
 
-/** Downloads a video, hands its temp path to `use`, deletes it afterwards. */
+/** Downloads a video, hands its temp path to `use`, deletes it afterwards.
+ * Downloads go through curl: Bun's fetch intermittently hung against the ad
+ * CDN mid-scan, while curl proved reliable — and --max-time guarantees a
+ * stuck download skips one ad instead of stalling the run. */
 export async function withVideo<T>(
   videoUrl: string,
   use: (videoPath: string) => Promise<T>,
@@ -23,11 +26,12 @@ export async function withVideo<T>(
   const dir = mkdtempSync(path.join(tmpdir(), "supercut-"));
   const videoPath = path.join(dir, "ad.mp4");
   try {
-    // CDN links in ad libraries go stale; a hung download must not stall the
-    // whole scan, so the fetch gets a hard deadline and the ad gets skipped.
-    const response = await fetch(videoUrl, { signal: AbortSignal.timeout(60_000) });
-    if (!response.ok) throw new Error(`video download failed: ${response.status}`);
-    await Bun.write(videoPath, response);
+    const proc = Bun.spawn(
+      ["curl", "--silent", "--fail", "--location", "--max-time", "120", "--output", videoPath, videoUrl],
+      { stdout: "ignore", stderr: "ignore" },
+    );
+    const exitCode = await proc.exited;
+    if (exitCode !== 0) throw new Error(`video download failed (curl exit ${exitCode})`);
     return await use(videoPath);
   } finally {
     rmSync(dir, { recursive: true, force: true });

@@ -24,8 +24,11 @@ export interface FindAdsResult {
 }
 
 export async function findAds(market: string): Promise<FindAdsResult> {
-  const lastSeenAfter =
-    Math.floor(Date.now() / 1000) - MAX_DAYS_SINCE_LAST_SEEN * DAY_SECONDS;
+  // Rounded to the UTC day so the recency cutoff — and with it the search
+  // cache key — is stable across re-runs on the same day. A cutoff computed
+  // from the exact second would miss the cache and re-spend credits.
+  const startOfTodayUtc = Math.floor(Date.now() / 1000 / DAY_SECONDS) * DAY_SECONDS;
+  const lastSeenAfter = startOfTodayUtc - MAX_DAYS_SINCE_LAST_SEEN * DAY_SECONDS;
   const shared = {
     pageSize: ADS_PER_SEARCH_ANGLE,
     lastSeenAfter,

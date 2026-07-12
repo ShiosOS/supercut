@@ -50,36 +50,44 @@ export async function chatJson<Schema extends z.ZodType>(
 async function completeRaw<Schema extends z.ZodType>(
   request: ChatJsonRequest<Schema>,
 ): Promise<string> {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    // A stuck model call must fail the one ad, not the whole scan.
-    signal: AbortSignal.timeout(180_000),
-    headers: {
-      Authorization: `Bearer ${requireApiKey()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: request.model,
-      messages: request.messages,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: request.schemaName,
-          strict: true,
-          schema: toJSONSchema(request.schema),
-        },
+  // Manual timer instead of AbortSignal.timeout: a stuck model call must fail
+  // the one ad, not the whole scan, and the manual controller has proven more
+  // dependable under Bun during long runs.
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 180_000);
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${requireApiKey()}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`OpenRouter returned ${response.status}: ${await response.text()}`);
+      body: JSON.stringify({
+        model: request.model,
+        messages: request.messages,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: request.schemaName,
+            strict: true,
+            schema: toJSONSchema(request.schema),
+          },
+        },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`OpenRouter returned ${response.status}: ${await response.text()}`);
+    }
+    const payload = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const content = payload.choices?.[0]?.message?.content;
+    if (!content) throw new Error("OpenRouter reply had no message content");
+    return content;
+  } finally {
+    clearTimeout(deadline);
   }
-  const payload = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenRouter reply had no message content");
-  return content;
 }
 
 function tryParseJson(text: string): unknown {
