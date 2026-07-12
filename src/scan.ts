@@ -43,15 +43,24 @@ const progress = (
   toWatch = 0,
 ) => writeProgress({ market, stage, detail, watched, toWatch, updatedAt: "" });
 
+// Stage timing goes to the scan log so slow runs can be diagnosed at a glance.
+let stageStartedAt = Date.now();
+function logStageDone(stage: string): void {
+  console.log(`${stage}: ${((Date.now() - stageStartedAt) / 1000).toFixed(1)}s`);
+  stageStartedAt = Date.now();
+}
+
 try {
   await progress("searching", "pulling candidate ads from the ad library");
   const { ads: candidates, searched } = await findAds(market);
   console.log(`pool: ${candidates.length} admitted candidates (30+ days, seen in last 30)`);
+  logStageDone("findAds");
 
   // Spend the watch budget on likely on-market ads first; the real gate
   // still judges every watched ad from the video itself.
   const ordered = await triageByMetadata(market, candidates);
   const toWatch = ordered.slice(0, MAX_ADS_WATCHED);
+  logStageDone("triage");
 
   // Ads are watched in parallel; the mechanicals cache is loaded once here,
   // filled in memory, and persisted once after the phase.
@@ -81,6 +90,7 @@ try {
   const skips = outcomesByAd.flatMap((outcome) => (outcome.status === "skipped" ? [outcome] : []));
   for (const skip of skips) console.log(`  skip ${skip.adId} (${skip.brand}): ${skip.reason}`);
   console.log(`watched: ${watched.length}, skipped: ${skips.length}`);
+  logStageDone("watch");
 
   const uniqueCreatives = dedupeCreatives(
     watched.map(({ facts, fingerprint }) => ({ ad: facts.ad, fingerprint })),
@@ -118,6 +128,7 @@ try {
   // permalinks fetched) while the explain call is in flight.
   const exemplarsPromise = buildExemplarsByFormat(market, tally, pool);
   const prose = await explainTally(market, tally, qa);
+  logStageDone("explain");
   await writeJson(dataPaths.tallies(market), {
     market,
     generatedAt: new Date().toISOString(),
@@ -132,6 +143,7 @@ try {
         await generateBrandBrief(market, sampleBriefBrand, tally, prose),
       )
     : undefined;
+  if (sampleBriefBrand) logStageDone("sample brief");
 
   await progress("rendering", "assembling the playbook");
   const html = renderPlaybook({
@@ -156,6 +168,7 @@ try {
   const outputPath = path.join("examples", `${marketSlug(market)}.html`);
   await Bun.write(outputPath, html);
   await progress("done", `playbook written to ${outputPath}`);
+  logStageDone("render");
   console.log(`done: ${outputPath} (${(html.length / 1024 / 1024).toFixed(2)} MB)`);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
