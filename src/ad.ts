@@ -64,6 +64,7 @@ const BUTTON_TEXT_TRANSLATIONS: Record<string, string> = {
   立即注册: "Sign up",
   联系我们: "Contact us",
   立即预订: "Book now",
+  立即订购: "Order now",
 };
 
 /** Maps one raw PipiSpy item to an Ad. Returns null when the item lacks the
