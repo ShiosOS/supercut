@@ -13,3 +13,4 @@ out/
 # temp
 tmp/
 *.log
+tsconfig.tsbuildinfo
