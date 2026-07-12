@@ -78,3 +78,7 @@ plus recon runs against the live APIs before the pipeline was written.
 Built for the NewForm take-home. Depth lives in
 [docs/architecture.md](docs/architecture.md) (what and where) and
 [docs/decisions.md](docs/decisions.md) (why).
+
+Suggested GitHub repo description (repo owner: set under Settings → About):
+*Type a market, get a playbook of what's working in its paid social video ads.
+AI watches each ad, code counts the patterns, every claim comes with receipts.*
