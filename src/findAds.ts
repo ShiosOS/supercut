@@ -16,7 +16,14 @@ import { searchAds, SORT, type SearchParams } from "./pipispy";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
-export async function findAds(market: string): Promise<Ad[]> {
+export interface FindAdsResult {
+  ads: Ad[];
+  /** Total results returned across all search angles, before any filtering —
+   * the honest denominator for "how we picked these ads". */
+  searched: number;
+}
+
+export async function findAds(market: string): Promise<FindAdsResult> {
   const lastSeenAfter =
     Math.floor(Date.now() / 1000) - MAX_DAYS_SINCE_LAST_SEEN * DAY_SECONDS;
   const shared = {
@@ -53,7 +60,7 @@ export async function findAds(market: string): Promise<Ad[]> {
       `  findAds: "${angle.keyword}" sort=${angle.sort} → pool now ${seen.size} ads (${searched} searched)`,
     );
   }
-  return [...seen.values()];
+  return { ads: [...seen.values()], searched };
 }
 
 /** The admission filter, restated in code: longevity earns study, recency
