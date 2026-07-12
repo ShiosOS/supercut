@@ -4,7 +4,7 @@
 // re-run never downloads or re-describes an ad it has already seen.
 
 import type { Ad } from "./ad";
-import { MAX_VIDEO_SECONDS } from "./constants";
+import { MAX_VIDEO_MEGABYTES, MAX_VIDEO_SECONDS } from "./constants";
 import { dataPaths, readJsonIfExists, writeJson } from "./dataDir";
 import { describeAd, readCachedFactSheet } from "./describe";
 import {
@@ -41,6 +41,10 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
       const durationSeconds = await probeDuration(videoPath);
       if (durationSeconds > MAX_VIDEO_SECONDS) {
         return skipped(ad, `video is ${Math.round(durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`);
+      }
+      const megabytes = (await Bun.file(videoPath).bytes()).length / 1024 / 1024;
+      if (megabytes > MAX_VIDEO_MEGABYTES) {
+        return skipped(ad, `video file is ${megabytes.toFixed(0)}MB, over the ${MAX_VIDEO_MEGABYTES}MB limit`);
       }
       const fingerprint = await fingerprintVideo(videoPath);
       const measuredCutsFirst10s = await countCutsFirst10s(videoPath);

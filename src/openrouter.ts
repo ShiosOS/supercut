@@ -52,6 +52,8 @@ async function completeRaw<Schema extends z.ZodType>(
 ): Promise<string> {
   const response = await fetch(API_URL, {
     method: "POST",
+    // A stuck model call must fail the one ad, not the whole scan.
+    signal: AbortSignal.timeout(180_000),
     headers: {
       Authorization: `Bearer ${requireApiKey()}`,
       "Content-Type": "application/json",

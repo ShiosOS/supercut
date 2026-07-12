@@ -28,6 +28,10 @@ export const MAX_ADS_WATCHED = 70;
  * rarely the repeatable paid-social unit this tool studies. */
 export const MAX_VIDEO_SECONDS = 180;
 
+/** Downloaded files larger than this are skipped — the model call ships the
+ * video as base64 in the request body, and oversized payloads get rejected. */
+export const MAX_VIDEO_MEGABYTES = 40;
+
 /** Below this many relevant ads, we refuse to write a playbook at all —
  * counting regularities in a handful of ads is astrology. */
 export const MIN_ADS_FOR_PLAYBOOK = 10;

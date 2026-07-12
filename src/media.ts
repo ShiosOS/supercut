@@ -23,7 +23,9 @@ export async function withVideo<T>(
   const dir = mkdtempSync(path.join(tmpdir(), "supercut-"));
   const videoPath = path.join(dir, "ad.mp4");
   try {
-    const response = await fetch(videoUrl);
+    // CDN links in ad libraries go stale; a hung download must not stall the
+    // whole scan, so the fetch gets a hard deadline and the ad gets skipped.
+    const response = await fetch(videoUrl, { signal: AbortSignal.timeout(60_000) });
     if (!response.ok) throw new Error(`video download failed: ${response.status}`);
     await Bun.write(videoPath, response);
     return await use(videoPath);
