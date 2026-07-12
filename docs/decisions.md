@@ -51,6 +51,28 @@ live API (the docs are a JS app, so fields were verified by pulling):
 **Alternative:** Foreplay's public API. PipiSpy was chosen because its delivery
 metadata (`put_days`) maps directly onto the longevity filter.
 
+## ffmpeg for mechanical facts (recon-verified)
+
+**Choice:** cut counts, hook frames, and fingerprint inputs come from ffmpeg,
+not the model. Verified locally on ffmpeg 6.1.1 before any pipeline code:
+
+- Scene-cut detection via `select='gt(scene,0.4)'` + `metadata=print` found all
+  3 cuts in a synthetic 4-scene clip at their exact timestamps.
+- Hook frames as 320px webp at quality 70 land around 4 KB each — small enough
+  to embed dozens as base64 in a single self-contained playbook file.
+- An 8×8 grayscale raw frame (64 bytes) is enough for an average-hash
+  perceptual fingerprint, used to collapse re-uploads of the same creative.
+
+## One video model, coarse claims only
+
+**Choice:** `google/gemini-3-flash-preview` via OpenRouter (video accepted as a
+base64 `data:video/mp4` URL part, roughly $0.002 per ad). Its content
+perception and verbatim speech reading are reliable; its visual-event
+timestamps drift 2–5 seconds. So the questionnaire asks for what happened, not
+when to the second — see the time-bins entry below. Videos over 180 seconds are
+skipped: they cost disproportionately and are rarely the repeatable paid-social
+unit this tool studies.
+
 ## Coarse time bins instead of second-precise timestamps
 
 **Choice:** the questionnaire reports visual timing in bins (first 3 seconds /
