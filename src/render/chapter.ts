@@ -13,6 +13,10 @@ export interface ExemplarView {
   playCount: number;
   hookQuote: string;
   frameDataUrls: string[];
+  /** Public permalink to the live ad — the strongest receipt available. */
+  adUrl: string | null;
+  /** Provider's spend estimate in USD, when available. */
+  estimatedSpendUsd: number | null;
 }
 
 type ChapterProse = PlaybookProse["chapters"][number];
@@ -63,12 +67,19 @@ function exemplarFigure(exemplar: ExemplarView) {
 
 function renderExemplarRow(exemplar: ExemplarView): string {
   const quote = exemplar.hookQuote ? `Opens with: “${escapeHtml(exemplar.hookQuote)}” · ` : "";
+  const spend =
+    exemplar.estimatedSpendUsd && exemplar.estimatedSpendUsd > 0
+      ? ` · ~$${compactNumber(exemplar.estimatedSpendUsd)} est. spend`
+      : "";
+  const link = exemplar.adUrl
+    ? ` · <a href="${escapeHtml(exemplar.adUrl)}">watch the ad</a>`
+    : "";
   return `<div class="exemplar"><span class="who">${escapeHtml(exemplar.brand)}</span><br>
-${quote}${exemplar.daysRunning} days live · ${formatPlays(exemplar.playCount)} plays</div>`;
+${quote}${exemplar.daysRunning} days live · ${compactNumber(exemplar.playCount)} plays${spend}${link}</div>`;
 }
 
-function formatPlays(playCount: number): string {
-  if (playCount >= 1_000_000) return `${(playCount / 1_000_000).toFixed(1)}M`;
-  if (playCount >= 1_000) return `${Math.round(playCount / 1_000)}k`;
-  return String(playCount);
+function compactNumber(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(value);
 }
