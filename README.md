@@ -65,6 +65,26 @@ bun run dev            # web app: browse playbooks, start scans, generate brand 
 - **A full strategist copilot (chat, scoring dashboards, asset generation).**
   Three products in a trenchcoat. One document a strategist can act on beats
   all three half-done.
+- **Advertiser-anchored market scans.** The ad library can search by
+  advertiser and rank top spenders per category — a competitor-intelligence
+  spine that's a different product from a market playbook.
+- **Meta Ad Library reach data.** The provider exposes audience reach and
+  active days for Meta ads — real delivery data, stronger than play counts —
+  but it's a second data model whose numbers don't compare cleanly with the
+  play-count pool a single document tallies across.
+
+## Where this goes next
+
+Grounded in API capabilities verified during this build and cut for scope:
+
+- A sameness score per format: submit an exemplar hook frame to the
+  provider's image-similarity search and count visually near-identical ads
+  across brands — the credible version of a whitespace finder.
+- A living playbook: ad monitor tasks (~$1 per advertiser per month) on the
+  market's top advertisers, regenerating the document with a diff of what
+  changed since last month.
+- Brand deep-dives: per-competitor launch cadence and workhorse assets from
+  the store ad-schedule and longest-running-creative endpoints.
 
 ## How I used AI
 
@@ -82,5 +102,5 @@ Built for the NewForm take-home. Depth lives in
 [docs/decisions.md](docs/decisions.md) (why).
 
 Suggested GitHub repo description (repo owner: set under Settings → About):
-*Type a market, get a playbook of what's working in its paid social video ads.
-AI watches each ad, code counts the patterns, every claim comes with receipts.*
+_Type a market, get a playbook of what's working in its paid social video ads.
+AI watches each ad, code counts the patterns, every claim comes with receipts._
