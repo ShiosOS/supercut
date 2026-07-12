@@ -37,13 +37,16 @@ export async function findAds(market: string): Promise<FindAdsResult> {
     productMarket: CONSUMER_PRODUCT_MARKET,
   };
 
-  // One sort order is one bias; combine three rankings of the broad keyword
-  // with two tighter product-keyword pulls, then dedupe by ad id.
+  // One sort order is one bias; combine four rankings of the broad keyword
+  // with two tighter product-keyword pulls, then dedupe by ad id. The
+  // ad-spend stratum strengthens the admission thesis from "ran a long time"
+  // to "ran a long time with real money behind it".
   const subKeywords = await suggestSubKeywords(market);
   const angles: SearchParams[] = [
     { keyword: market, keywordType: 1, sort: SORT.engagement, ...shared },
     { keyword: market, keywordType: 1, sort: SORT.deliveryDays, ...shared },
     { keyword: market, keywordType: 1, sort: SORT.lastFound, ...shared },
+    { keyword: market, keywordType: 1, sort: SORT.adSpend, ...shared },
     ...subKeywords.map(
       (keyword): SearchParams => ({ keyword, keywordType: 5, sort: SORT.engagement, ...shared }),
     ),

@@ -24,8 +24,9 @@ export const CONSUMER_PRODUCT_MARKET = true;
 export const ADS_PER_SEARCH_ANGLE = 40;
 
 /** Total search-result budget per market. PipiSpy charges 1 credit per result
- * returned, so this is also the credit ceiling for a scan. */
-export const MAX_ADS_SEARCHED = 200;
+ * returned, so this is also the credit ceiling for a scan: four sort strata
+ * plus two sub-keyword pulls at 40 each. */
+export const MAX_ADS_SEARCHED = 240;
 
 /** Cap on videos actually downloaded and described. Watching is the expensive
  * step (bandwidth + model tokens); ~70 admitted ads is plenty to count from. */

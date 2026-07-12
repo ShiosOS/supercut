@@ -61,7 +61,7 @@ export function renderPlaybook(input: PlaybookInput): string {
 <section id="method">
 <h2>How we picked these ads</h2>
 <p>Advertisers kill losing ads fast, so an ad still delivering after a month has earned a look.
-We searched ${counts.searched} ads in this market and kept the ones running 30+ days and seen in the last 30.
+We searched ${counts.searched} ads in this market — including its heaviest spenders, so the pool reflects where real budgets go, not just what got views — and kept the ones running 30+ days and seen in the last 30.
 An AI watched each surviving ad and answered a fixed set of questions about it; code then counted the answers.
 ${counts.rejected} ads that turned out to sell something else were rejected — they are listed at the bottom.
 No single ad is called a winner here. The findings are patterns that repeat across ${counts.admitted} ads from ${tally.brandCount} different brands.</p>

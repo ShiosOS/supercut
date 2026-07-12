@@ -11,8 +11,9 @@ const API_URL = "https://www.pipispy.com/open-api/v1/data";
 const LIST_URI = "/v3/api/open/adspy/list";
 
 /** Sort orders the list endpoint accepts. Each one is a different bias, so
- * findAds pulls several and dedupes rather than trusting any single ranking. */
-export const SORT = { lastFound: 1, plays: 4, deliveryDays: 5, engagement: 6 } as const;
+ * findAds pulls several and dedupes rather than trusting any single ranking.
+ * adSpend ranks by the provider's spend estimate — money, not just attention. */
+export const SORT = { lastFound: 1, plays: 4, deliveryDays: 5, engagement: 6, adSpend: 21 } as const;
 
 export interface SearchParams {
   keyword: string;

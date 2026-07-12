@@ -14,9 +14,11 @@ or founder who needs to brief a shoot, not read a data dump.
 
 **The point of view:** longevity is an admission filter, not a verdict.
 Advertisers kill losing creative fast, so an ad still delivering after 30+
-days — and seen in the last 30 — has earned study. No single ad is ever
-called a winner; conclusions come only from counting regularities across the
-admitted pool ("34 of 39 ads show the product in the first 3 seconds").
+days — and seen in the last 30 — has earned study. The search strata include
+the market's heaviest spenders, so "still delivering" means real money kept
+backing the ad, not just that it lingered. No single ad is ever called a
+winner; conclusions come only from counting regularities across the admitted
+pool ("34 of 39 ads show the product in the first 3 seconds").
 
 ## How it thinks: describe → tally → explain
 
