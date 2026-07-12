@@ -1,0 +1,59 @@
+// Picks each chapter's exemplar ads at render time and loads their cached
+// hook frames as data URLs. Exemplars are the playbook's visual receipts, so
+// low-confidence format labels are excluded — they count in tallies but never
+// front a chapter.
+
+import { fetchAdDetail } from "./adDetail";
+import { MAX_EXEMPLARS_PER_CHAPTER } from "./constants";
+import { dataPaths } from "./dataDir";
+import { HOOK_FRAME_TIMESTAMPS } from "./constants";
+import type { ExemplarView } from "./render/playbook";
+import { pickExemplars, scoreAds } from "./studyScore";
+import type { AdFacts, Tally } from "./tally";
+
+export async function buildExemplarsByFormat(
+  market: string,
+  tally: Tally,
+  pool: AdFacts[],
+): Promise<Record<string, ExemplarView[]>> {
+  const byId = new Map(pool.map((facts) => [facts.ad.id, facts]));
+  const result: Record<string, ExemplarView[]> = {};
+
+  for (const format of tally.formats) {
+    const members = format.adIds
+      .map((adId) => byId.get(adId))
+      .filter((facts): facts is AdFacts => facts !== undefined)
+      .filter((facts) => facts.factSheet.formatConfidence !== "low");
+    const picked = pickExemplars(scoreAds(members), MAX_EXEMPLARS_PER_CHAPTER);
+    const pickedFacts = picked.flatMap((score) => {
+      const facts = byId.get(score.adId);
+      return facts ? [facts] : [];
+    });
+    result[format.formatLabel] = await Promise.all(
+      pickedFacts.map((facts) => toExemplarView(market, facts)),
+    );
+  }
+  return result;
+}
+
+async function toExemplarView(market: string, facts: AdFacts): Promise<ExemplarView> {
+  const frameDataUrls: string[] = [];
+  for (let index = 0; index < HOOK_FRAME_TIMESTAMPS.length; index += 1) {
+    const file = Bun.file(dataPaths.hookFrame(market, facts.ad.id, index));
+    if (!(await file.exists())) continue;
+    const bytes = await file.bytes();
+    frameDataUrls.push(`data:image/webp;base64,${Buffer.from(bytes).toString("base64")}`);
+  }
+  // Detail is fetched for exemplars only: the live permalink is a receipt
+  // worth one call for the handful of ads shown as examples.
+  const detail = await fetchAdDetail(market, facts.ad.id);
+  return {
+    adId: facts.ad.id,
+    brand: facts.ad.brand,
+    daysRunning: facts.ad.daysRunning,
+    playCount: facts.ad.playCount,
+    hookQuote: facts.factSheet.spokenHookQuote,
+    frameDataUrls,
+    adUrl: detail.adUrl,
+  };
+}
