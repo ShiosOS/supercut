@@ -17,6 +17,9 @@ export interface QaReport {
     notCheckable: number;
     contradictedAdIds: string[];
   };
+  /** Ads the model labeled "no ask" whose ad unit carries a purchase button —
+   * a labeling discrepancy between the model and the metadata. */
+  ctaDiscrepancy: { count: number; adIds: string[] };
 }
 
 export function buildQaReport(pool: AdFacts[]): QaReport {
@@ -36,13 +39,24 @@ export function buildQaReport(pool: AdFacts[]): QaReport {
     if (verdict === "contradicted") contradictedAdIds.push(facts.ad.id);
   }
 
+  const ctaDiscrepancyAdIds = pool
+    .filter((facts) => facts.factSheet.ctaStyle === "none" && isPurchaseButton(facts.ad.buttonText))
+    .map((facts) => facts.ad.id);
+
   return {
     cutEstimate: { meanAbsoluteError, shareWithin2 },
     lowConfidenceFormatAdIds: pool
       .filter((facts) => facts.factSheet.formatConfidence === "low")
       .map((facts) => facts.ad.id),
     hookQuotes: { ...hookQuotes, contradictedAdIds },
+    ctaDiscrepancy: { count: ctaDiscrepancyAdIds.length, adIds: ctaDiscrepancyAdIds },
   };
+}
+
+/** Button labels that ask for a purchase outright. "Learn more" is not one —
+ * a soft creative with a soft button is consistent, not a discrepancy. */
+function isPurchaseButton(buttonText: string): boolean {
+  return /shop|buy|order|purchase|cart/i.test(buttonText);
 }
 
 /** Loose word-overlap check: transcripts are ASR (typos, no punctuation), so
