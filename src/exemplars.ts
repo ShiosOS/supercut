@@ -24,8 +24,12 @@ export async function buildExemplarsByFormat(
       .filter((facts): facts is AdFacts => facts !== undefined)
       .filter((facts) => facts.factSheet.formatConfidence !== "low");
     const picked = pickExemplars(scoreAds(members), MAX_EXEMPLARS_PER_CHAPTER);
+    const pickedFacts = picked.flatMap((score) => {
+      const facts = byId.get(score.adId);
+      return facts ? [facts] : [];
+    });
     result[format.formatLabel] = await Promise.all(
-      picked.map((score) => toExemplarView(market, byId.get(score.adId) as AdFacts)),
+      pickedFacts.map((facts) => toExemplarView(market, facts)),
     );
   }
   return result;
