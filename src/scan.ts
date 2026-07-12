@@ -18,6 +18,7 @@ import { buildQaReport } from "./qa";
 import { renderBriefBlock } from "./render/briefBlock";
 import { renderPlaybook } from "./render/playbook";
 import { buildTally } from "./tally";
+import { triageByMetadata } from "./triage";
 import { watchAd } from "./watchAd";
 
 const market = process.argv[2];
@@ -35,7 +36,10 @@ try {
   const { ads: candidates, searched } = await findAds(market);
   console.log(`pool: ${candidates.length} admitted candidates (30+ days, seen in last 30)`);
 
-  const toWatch = candidates.slice(0, MAX_ADS_WATCHED);
+  // Spend the watch budget on likely on-market ads first; the real gate
+  // still judges every watched ad from the video itself.
+  const ordered = await triageByMetadata(market, candidates);
+  const toWatch = ordered.slice(0, MAX_ADS_WATCHED);
   const watched: Extract<Awaited<ReturnType<typeof watchAd>>, { status: "watched" }>[] = [];
   const skips: { adId: string; brand: string; reason: string }[] = [];
   for (const [index, ad] of toWatch.entries()) {

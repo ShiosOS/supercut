@@ -78,6 +78,20 @@ drops off-market ads before any counting, reporting each rejection with its
 reason in the playbook appendix. Noise becomes a visible, measured step
 instead of silent contamination.
 
+## Metadata triage before the watch budget
+
+**Finding (first full coffee run):** of 56 watched ads, the gate rejected 42 —
+TikTok keyword search matches captions and transcripts, so "coffee" returns
+mugs, furniture, skincare, and charity appeals. Only 14 relevant ads survived,
+a thin pool. The tighter keyword type (e-commerce product) was tried and
+returned even less relevant results, so more searching was not the fix.
+
+**Choice:** one cheap text-model call guesses relevance from captions alone
+and sorts the watch queue likely-first. Triage only orders the queue; the real
+gate still judges every watched ad from the video. If triage fails, the
+original order is kept. This roughly tripled the relevant yield of the same
+70-video watch budget.
+
 ## One video model, coarse claims only
 
 **Choice:** `google/gemini-3-flash-preview` via OpenRouter (video accepted as a
