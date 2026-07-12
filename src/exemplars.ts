@@ -44,8 +44,8 @@ async function toExemplarView(market: string, facts: AdFacts): Promise<ExemplarV
     const bytes = await file.bytes();
     frameDataUrls.push(`data:image/webp;base64,${Buffer.from(bytes).toString("base64")}`);
   }
-  // Detail is fetched for exemplars only: the permalink and spend estimate
-  // are receipts worth one call for the handful of ads shown as examples.
+  // Detail is fetched for exemplars only: the live permalink is a receipt
+  // worth one call for the handful of ads shown as examples.
   const detail = await fetchAdDetail(market, facts.ad.id);
   return {
     adId: facts.ad.id,
@@ -55,6 +55,5 @@ async function toExemplarView(market: string, facts: AdFacts): Promise<ExemplarV
     hookQuote: facts.factSheet.spokenHookQuote,
     frameDataUrls,
     adUrl: detail.adUrl,
-    estimatedSpendUsd: detail.estimatedSpendUsd,
   };
 }

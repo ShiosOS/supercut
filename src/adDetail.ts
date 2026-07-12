@@ -1,8 +1,9 @@
 // Fetches the PipiSpy detail record for one ad — used only for exemplar ads,
-// where two fields the list lacks earn their keep: a public permalink to the
-// live ad (the strongest receipt a playbook can offer) and the provider's
-// spend estimate. Detail calls are free within 3 days of the list pull and
-// cached forever after, so re-renders never re-spend.
+// where one field the list lacks earns its keep: a public permalink to the
+// live ad, the strongest receipt a playbook can offer. (The detail's spend
+// estimate turned out to be plays/1000 — a formula, not data — so it is not
+// used; see decisions.md.) Detail calls are free within 3 days of the list
+// pull and cached forever after, so re-renders never re-spend.
 
 import path from "node:path";
 import { z } from "zod";
@@ -16,7 +17,6 @@ const detailResponseSchema = z.object({
   data: z
     .object({
       url: z.string().nullish(),
-      ad_fee: z.number().nullish(),
     })
     .nullish(),
 });
@@ -24,8 +24,6 @@ const detailResponseSchema = z.object({
 export interface AdDetail {
   /** Public permalink to the ad post, when the provider has one. */
   adUrl: string | null;
-  /** Provider's spend estimate in USD, when available. */
-  estimatedSpendUsd: number | null;
 }
 
 export async function fetchAdDetail(market: string, adId: string): Promise<AdDetail> {
@@ -33,7 +31,7 @@ export async function fetchAdDetail(market: string, adId: string): Promise<AdDet
   const cached = await readJsonIfExists<AdDetail>(cachePath);
   if (cached) return cached;
 
-  const empty: AdDetail = { adUrl: null, estimatedSpendUsd: null };
+  const empty: AdDetail = { adUrl: null };
   const key = process.env.PIPISPY_API_KEY;
   if (!key) return empty;
 
@@ -49,7 +47,6 @@ export async function fetchAdDetail(market: string, adId: string): Promise<AdDet
 
   const detail: AdDetail = {
     adUrl: parsed.data.data.url?.startsWith("http") ? parsed.data.data.url : null,
-    estimatedSpendUsd: parsed.data.data.ad_fee ?? null,
   };
   await writeJson(cachePath, detail);
   return detail;

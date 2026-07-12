@@ -15,8 +15,6 @@ export interface ExemplarView {
   frameDataUrls: string[];
   /** Public permalink to the live ad — the strongest receipt available. */
   adUrl: string | null;
-  /** Provider's spend estimate in USD, when available. */
-  estimatedSpendUsd: number | null;
 }
 
 type ChapterProse = PlaybookProse["chapters"][number];
@@ -69,13 +67,9 @@ function exemplarFigure(exemplar: ExemplarView) {
 
 function renderExemplarRow(exemplar: ExemplarView): string {
   const quote = exemplar.hookQuote ? `Opens with: “${escapeHtml(exemplar.hookQuote)}” · ` : "";
-  const spend =
-    exemplar.estimatedSpendUsd && exemplar.estimatedSpendUsd > 0
-      ? ` · ~$${compactNumber(exemplar.estimatedSpendUsd)} est. spend`
-      : "";
   const link = exemplar.adUrl ? ` · <a href="${escapeHtml(exemplar.adUrl)}">watch the ad</a>` : "";
   return `<div class="exemplar"><span class="who">${escapeHtml(exemplar.brand)}</span><br>
-${quote}${exemplar.daysRunning} days live · ${compactNumber(exemplar.playCount)} plays${spend}${link}</div>`;
+${quote}${exemplar.daysRunning} days live · ${compactNumber(exemplar.playCount)} plays${link}</div>`;
 }
 
 function compactNumber(value: number): string {
