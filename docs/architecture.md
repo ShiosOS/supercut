@@ -28,25 +28,26 @@ flowchart TD
 
 ## Stage map
 
-| Stage      | File                | Job                                                               | AI?                            |
-| ---------- | ------------------- | ----------------------------------------------------------------- | ------------------------------ |
-| entrypoint | `src/scan.ts`       | run every stage in order, report progress                         | —                              |
-| findAds    | `src/findAds.ts`    | pull 5 biased search angles, apply the 30/30 admission filter     | one tiny call for sub-keywords |
-| triage     | `src/triage.ts`     | order the watch queue, likely on-market first                     | yes (captions only)            |
-| watchAd    | `src/watchAd.ts`    | download once; fingerprint, cut count, hook frames, questionnaire | calls describe                 |
-| describe   | `src/describe.ts`   | one video model fills the questionnaire for one ad                | yes (video)                    |
-| dedupe     | `src/dedupe.ts`     | collapse re-uploads, cap ads per brand                            | no                             |
-| gate       | `src/gate.ts`       | reject ads that sell something off-market, with reasons           | no                             |
-| tally      | `src/tally.ts`      | count answers across the pool; every count keeps ad ids           | no                             |
-| qa         | `src/qa.ts`         | measure model drift vs ffmpeg and ASR transcripts                 | no                             |
-| studyScore | `src/studyScore.ts` | rank ads for example lists (weights in constants)                 | no                             |
-| explain    | `src/explain.ts`    | phrase counted patterns into chapters and tests                   | yes (tallies only)             |
-| brief      | `src/brief.ts`      | rewrite the tests for one brand, still tally-bound                | yes (tallies only)             |
-| render     | `src/render/*.ts`   | assemble the playbook HTML with frame strips                      | no                             |
+| Stage      | File                | Job                                                                            | AI?                            |
+| ---------- | ------------------- | ------------------------------------------------------------------------------ | ------------------------------ |
+| entrypoint | `src/scan.ts`       | run every stage in order, report progress                                      | —                              |
+| findAds    | `src/findAds.ts`    | pull six biased search angles of product ads, apply the 30/30 admission filter | one tiny call for sub-keywords |
+| triage     | `src/triage.ts`     | order the watch queue, likely on-market first                                  | yes (captions only)            |
+| watchAd    | `src/watchAd.ts`    | download once; fingerprint, cut count, hook frames, questionnaire              | calls describe                 |
+| describe   | `src/describe.ts`   | one video model fills the questionnaire for one ad                             | yes (video)                    |
+| dedupe     | `src/dedupe.ts`     | collapse re-uploads, cap ads per brand                                         | no                             |
+| gate       | `src/gate.ts`       | reject ads that sell something off-market, with reasons                        | no                             |
+| tally      | `src/tally.ts`      | count answers across the pool; every count keeps ad ids                        | no                             |
+| qa         | `src/qa.ts`         | measure model drift vs ffmpeg and ASR transcripts                              | no                             |
+| studyScore | `src/studyScore.ts` | rank ads for example lists (weights in constants)                              | no                             |
+| explain    | `src/explain.ts`    | phrase counted patterns into chapters and tests                                | yes (tallies only)             |
+| brief      | `src/brief.ts`      | rewrite the tests for one brand, still tally-bound                             | yes (tallies only)             |
+| render     | `src/render/*.ts`   | assemble the playbook HTML with frame strips                                   | no                             |
 
 Supporting modules: `src/constants.ts` (every threshold, with reasons),
 `src/ad.ts` (the `Ad` type + PipiSpy mapper), `src/factSheet.ts` (the
 questionnaire schema), `src/pipispy.ts` (API client + credit-saving cache),
+`src/adDetail.ts` (permalink + spend estimate for exemplar ads, cached),
 `src/openrouter.ts` (all model calls, schema-validated), `src/media.ts`
 (everything that touches a video file), `src/dataDir.ts` (paths + JSON IO),
 `src/progress.ts` (scan progress file).
@@ -72,6 +73,7 @@ persisted — each lives in a temp dir for the seconds one ad takes to process.
 | ------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | raw search responses           | `data/<m>/searches/<paramsHash>.json` | new params (the recency cutoff rounds to the UTC day, so same-day re-runs hit the cache and spend no credits) |
 | questionnaire per ad           | `data/<m>/factSheets/<adId>.json`     | `_schemaVersion` != `FACT_SHEET_SCHEMA_VERSION`                                                               |
+| exemplar permalink + spend     | `data/<m>/details/<adId>.json`        | never (a fetched detail record is final)                                                                      |
 | fingerprint + cut count per ad | `data/<m>/mechanicals.json`           | stored `sceneCutThreshold` != current constant                                                                |
 | hook frames (webp, ~320px)     | `data/<m>/frames/<adId>/<n>.webp`     | never (re-extracted only if missing)                                                                          |
 | tallies + prose for the app    | `data/<m>/tallies.json`               | overwritten each scan                                                                                         |
