@@ -72,7 +72,7 @@ export const EXPLAIN_MODEL = "google/gemini-3-flash-preview";
 
 /** Bump when the FactSheet schema changes shape; cached questionnaires with an
  * older version are re-described instead of trusted. */
-export const FACT_SHEET_SCHEMA_VERSION = 2;
+export const FACT_SHEET_SCHEMA_VERSION = 3;
 
 /** Study-score weights, printed verbatim in the playbook footnote. Longevity
  * leads because it is the admission thesis; engagement breaks ties; label

@@ -65,6 +65,7 @@ We searched ${counts.searched} ads in this market and kept the ones running 30+ 
 An AI watched each surviving ad and answered a fixed set of questions about it; code then counted the answers.
 ${counts.rejected} ads that turned out to sell something else were rejected — they are listed at the bottom.
 No single ad is called a winner here. The findings are patterns that repeat across ${counts.admitted} ads from ${tally.brandCount} different brands.</p>
+${barChart(groupRareLabels(tally.segments), "What the studied ads sell")}
 </section>
 
 <section id="takeaways">
@@ -164,6 +165,25 @@ function renderTests(prose: PlaybookProse): string {
 
 function chapterProse(prose: PlaybookProse, formatLabel: string) {
   return prose.chapters.find((chapter) => chapter.formatLabel === formatLabel) ?? null;
+}
+
+/** Model-written segment labels have a long tail of one-offs; bundling them
+ * keeps the segment chart readable. */
+function groupRareLabels(segments: Tally["segments"]): Tally["segments"] {
+  const common = segments.counts.filter((entry) => entry.count >= 2);
+  const rare = segments.counts.filter((entry) => entry.count < 2);
+  if (rare.length <= 1) return segments;
+  return {
+    total: segments.total,
+    counts: [
+      ...common,
+      {
+        label: `${rare.length} one-off segments`,
+        count: rare.reduce((sum, entry) => sum + entry.count, 0),
+        adIds: rare.flatMap((entry) => entry.adIds),
+      },
+    ],
+  };
 }
 
 function formatPlays(playCount: number): string {
