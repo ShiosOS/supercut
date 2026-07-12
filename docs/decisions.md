@@ -45,6 +45,9 @@ live API (the docs are a JS app, so fields were verified by pulling):
   flag** — recency via `last_put_time` is a stated proxy.
 - Pricing is 1 credit per result returned, so every raw search response is
   cached on disk keyed by a hash of its params; re-runs never re-spend credits.
+- `sort_type` must be the string `"asc"`/`"desc"` (the API rejects numbers with
+  a 400), and failed requests still return HTTP 200 with `success: false` — so
+  the client checks the body, not the status code.
 - `ai_analysis_script` is their ASR transcript: no timestamps, often missing —
   used only to corroborate hook quotes, never as a primary source.
 

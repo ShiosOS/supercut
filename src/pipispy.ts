@@ -26,10 +26,10 @@ export interface SearchParams {
 }
 
 const responseSchema = z.object({
-  data: z.object({
-    data: z.array(z.unknown()),
-    remaining_credits: z.number().nullish(),
-  }),
+  success: z.boolean(),
+  message: z.string().nullish(),
+  remaining_credits: z.number().nullish(),
+  data: z.object({ data: z.array(z.unknown()) }).nullish(),
 });
 
 /** Searches PipiSpy for video ads, serving from the disk cache when the same
@@ -49,7 +49,7 @@ export async function searchAds(
       region: ["US"],
       ad_language: ["en"],
       sort: params.sort,
-      sort_type: 2,
+      sort_type: "desc",
       current_page: 1,
       page_size: params.pageSize,
     },
@@ -84,9 +84,12 @@ async function fetchFromApi(
     throw new Error(`PipiSpy returned ${response.status}: ${await response.text()}`);
   }
   const parsed = responseSchema.parse(await response.json());
+  if (!parsed.success || !parsed.data) {
+    throw new Error(`PipiSpy rejected the search: ${parsed.message ?? "no message"}`);
+  }
   const items = parsed.data.data;
   console.log(
-    `  pipispy: ${items.length} results, ${parsed.data.remaining_credits ?? "?"} credits left`,
+    `  pipispy: ${items.length} results, ${parsed.remaining_credits ?? "?"} credits left`,
   );
   await writeJson(cachePath, { items });
   return items;
