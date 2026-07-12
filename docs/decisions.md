@@ -135,6 +135,26 @@ the example rows. A live link is the strongest receipt a playbook can offer.
 Detail is not fetched for the rest of the pool — nothing in the tallies uses
 it, so it would be spend without a reader benefit.
 
+## No zombie cap on delivery days
+
+`put_day_max` exists, so multi-year evergreen assets could be capped out of
+the pool (say at 730 days). Deliberately not done: a 900-day survivor is the
+strongest single piece of evidence this data offers, and the recency filter
+already guarantees it was seen delivering within the last 30 days — it is
+what's working now, it just started working a long time ago. The observed
+median pool age (~190 days) shows old veterans are not drowning the tallies,
+and the per-chapter "median days live" makes their presence visible rather
+than hidden. If a future market turns up a pool dominated by 2+ year assets,
+that median is where it will show first.
+
+## Considered and cut: a like-rate sort stratum
+
+The list endpoint offers `sort: 7` (like rate). Cut: engagement rate already
+enters the system through the study score, where it can be floored and
+weighted, and a fifth keyword pull would spend another 40 credits for
+marginal pool diversity — the four existing strata already over-fill the
+watch budget.
+
 ## Scoped out: advertiser-anchored scans and Meta reach data
 
 Two capabilities were verified against the API surface and deliberately cut:
