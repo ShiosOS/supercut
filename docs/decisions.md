@@ -227,16 +227,18 @@ seconds — come from ffmpeg scene detection, not the model.
 
 ## The watch phase runs in parallel
 
-**Choice:** ads are watched 16 at a time (`WATCH_CONCURRENCY`), and the six
-search pulls run at once. The watch step is network-bound — the model call
-dominates at several seconds per ad — so a sequential scan took 15–25 minutes
-while doing almost no local work. Parallel, a fresh scan finishes in about a
-minute; ffmpeg's per-ad work is brief enough that 4 cores keep up.
+**Choice:** ads are watched 32 at a time (`WATCH_CONCURRENCY`), the six
+search pulls run at once, triage runs as four parallel caption chunks, hook
+frames come from one ffmpeg pass per ad instead of four, and exemplars build
+while the explain call is in flight. The scan is network-bound — the model
+call dominates at several seconds per ad — so the sequential version took
+15–25 minutes while doing almost no local work. Parallel, a measured cold
+scan (nothing cached but the searches) finishes in under a minute.
 
 **Consequence:** the per-ad mechanicals cache became a shared in-memory map
-that the entrypoint loads and persists once per run. Sixteen tasks doing
-read-modify-write on one JSON file would corrupt it; sixteen tasks mutating
-one Map on a single-threaded event loop cannot.
+that the entrypoint loads and persists once per run. Thirty-two tasks doing
+read-modify-write on one JSON file would corrupt it; thirty-two tasks
+mutating one Map on a single-threaded event loop cannot.
 
 ## Videos are transient
 
