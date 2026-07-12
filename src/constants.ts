@@ -12,6 +12,13 @@ export const MAX_DAYS_SINCE_LAST_SEEN = 30;
 /** Cap per brand so one heavy advertiser cannot dominate the pool's tallies. */
 export const MAX_ADS_PER_BRAND = 4;
 
+/** This build targets consumer-product markets, so every search pre-filters
+ * to e-commerce ads with a product attached — the first run spent most of its
+ * watch budget on ads the relevance gate later dropped, and this moves that
+ * cut upstream. An app-focused market would need is_app instead: flip this
+ * flag, don't abstract it. */
+export const CONSUMER_PRODUCT_MARKET = true;
+
 /** Ads requested per search angle. Each sort order is one bias; we pull
  * several angles and dedupe rather than trusting any single ranking. */
 export const ADS_PER_SEARCH_ANGLE = 40;

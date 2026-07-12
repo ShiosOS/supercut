@@ -6,6 +6,7 @@ import { z } from "zod";
 import { adFromPipiSpyItem, type Ad } from "./ad";
 import {
   ADS_PER_SEARCH_ANGLE,
+  CONSUMER_PRODUCT_MARKET,
   EXPLAIN_MODEL,
   MAX_ADS_SEARCHED,
   MAX_DAYS_SINCE_LAST_SEEN,
@@ -33,6 +34,7 @@ export async function findAds(market: string): Promise<FindAdsResult> {
     pageSize: ADS_PER_SEARCH_ANGLE,
     lastSeenAfter,
     minDaysRunning: MIN_DAYS_RUNNING,
+    productMarket: CONSUMER_PRODUCT_MARKET,
   };
 
   // One sort order is one bias; combine three rankings of the broad keyword

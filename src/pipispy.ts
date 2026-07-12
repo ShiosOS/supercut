@@ -23,6 +23,9 @@ export interface SearchParams {
   /** Only ads seen delivering after this unix time. */
   lastSeenAfter: number;
   minDaysRunning: number;
+  /** Pre-filter to e-commerce ads with a product attached — right for
+   * consumer-product markets, wrong for app or game markets. */
+  productMarket: boolean;
 }
 
 const responseSchema = z.object({
@@ -44,6 +47,9 @@ export async function searchAds(
     params: {
       extend_keywords: [{ type: params.keywordType, keyword: params.keyword }],
       formate_type: [1], // video ads only
+      // data_type 3 = e-commerce ads (no games/apps); is_product = a real
+      // product is attached. Cuts relevance-gate noise before credits are spent.
+      ...(params.productMarket ? { data_type: [3], is_product: true } : {}),
       put_day_min: params.minDaysRunning,
       last_time_start: params.lastSeenAfter,
       region: ["US"],
