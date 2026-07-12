@@ -1,0 +1,6 @@
+# generated artifacts and caches — not hand-written code
+examples/
+data/
+.next/
+bun.lock
+next-env.d.ts
