@@ -3,8 +3,7 @@
 // the duration of withVideo() and is deleted before the next ad.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, rmSync } from "node:fs";
-import { mkdtempSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -85,32 +84,56 @@ export async function countCutsFirst10s(videoPath: string): Promise<number> {
 }
 
 /** Grabs the hook frames (first 3 seconds) as small webp files at the given
- * destination paths. Returns the paths that were actually written. */
+ * destination paths, in one ffmpeg pass — one invocation per ad instead of
+ * one per frame, so the parallel watch phase doesn't saturate the CPU.
+ * Returns the paths that were actually written. */
 export async function extractHookFrames(
   videoPath: string,
   destinationFor: (index: number) => string,
 ): Promise<string[]> {
-  const written: string[] = [];
-  for (const [index, timestamp] of HOOK_FRAME_TIMESTAMPS.entries()) {
-    const destination = destinationFor(index);
-    mkdirSync(path.dirname(destination), { recursive: true });
+  const frameCount = HOOK_FRAME_TIMESTAMPS.length;
+  const firstTimestamp = HOOK_FRAME_TIMESTAMPS[0] ?? 0.3;
+  const window = 3 - firstTimestamp;
+  const dir = mkdtempSync(path.join(tmpdir(), "supercut-frames-"));
+  try {
+    // fps=count/window samples evenly across the hook window, starting just
+    // after t=0 so an opening black frame is skipped.
     await runFfmpeg([
       "-ss",
-      String(timestamp),
+      String(firstTimestamp),
+      "-t",
+      String(window),
       "-i",
       videoPath,
-      "-frames:v",
-      "1",
       "-vf",
-      `scale=${HOOK_FRAME_WIDTH_PX}:-1`,
+      `fps=${frameCount}/${window},scale=${HOOK_FRAME_WIDTH_PX}:-1`,
+      "-frames:v",
+      String(frameCount),
+      // Without an explicit image2 muxer ffmpeg writes ONE animated webp
+      // instead of a numbered sequence.
+      "-f",
+      "image2",
+      "-c:v",
+      "libwebp",
       "-quality",
       String(HOOK_FRAME_WEBP_QUALITY),
       "-y",
-      destination,
+      path.join(dir, "%d.webp"),
     ]);
-    if (await Bun.file(destination).exists()) written.push(destination);
+    const written: string[] = [];
+    for (let index = 0; index < frameCount; index += 1) {
+      // The image2 muxer numbers output frames from 1.
+      const source = path.join(dir, `${index + 1}.webp`);
+      if (!(await Bun.file(source).exists())) continue;
+      const destination = destinationFor(index);
+      mkdirSync(path.dirname(destination), { recursive: true });
+      copyFileSync(source, destination);
+      written.push(destination);
+    }
+    return written;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
-  return written;
 }
 
 export async function probeDuration(videoPath: string): Promise<number> {

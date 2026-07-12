@@ -30,6 +30,7 @@ ${input.skips.length > 0 ? skipsBlock(input.skips) : ""}
 The AI was off by ${qa.cutEstimate.meanAbsoluteError.toFixed(1)} cuts on average, and within 2 cuts of the software on ${Math.round(qa.cutEstimate.shareWithin2 * 100)}% of ads.
 The cut counts printed in the chapters are the software's, not the AI's.</p>
 ${hookQuoteBlock(qa)}
+${ctaDiscrepancyBlock(qa, tally)}
 ${lowConfidenceBlock(qa, tally)}
 
 <h3>Assumptions this report makes</h3>
@@ -70,6 +71,14 @@ function hookQuoteBlock(qa: QaReport): string {
   }
   return `<p>Where a spoken hook could be checked against the ad library's own transcript (${checked} ads), the AI's quote matched ${corroborated} times and disagreed ${contradicted} time${contradicted === 1 ? "" : "s"}${contradictedAdIds.length > 0 ? ` (ad${contradictedAdIds.length === 1 ? "" : "s"} ${contradictedAdIds.map(escapeHtml).join(", ")})` : ""}.
 The other ${notCheckable} ads had on-screen-text hooks, no hook, or no transcript — nothing to check against.</p>`;
+}
+
+function ctaDiscrepancyBlock(qa: QaReport, tally: Tally): string {
+  if (qa.ctaDiscrepancy.count === 0) {
+    return "<p>Every ad the AI described as making no ask also carries no purchase button — the two sources agree.</p>";
+  }
+  return `<p>${qa.ctaDiscrepancy.count} of ${tally.totalAds} ads were described by the AI as making no ask, yet the ad unit itself carries a purchase button (ad${qa.ctaDiscrepancy.count === 1 ? "" : "s"} ${qa.ctaDiscrepancy.adIds.map(escapeHtml).join(", ")}).
+Read those "no ask" counts with that in mind: the AI judges the video, not the button under it.</p>`;
 }
 
 function lowConfidenceBlock(qa: QaReport, tally: Tally): string {

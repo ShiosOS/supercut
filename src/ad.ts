@@ -49,6 +49,24 @@ export const pipiSpyItemSchema = z.object({
 
 export type PipiSpyItem = z.infer<typeof pipiSpyItemSchema>;
 
+/** PipiSpy scrapes some ad units in a Chinese locale, so standard platform
+ * buttons arrive as Chinese labels. Mapped back to the English equivalents a
+ * strategist would recognize; unknown labels pass through untouched. */
+const BUTTON_TEXT_TRANSLATIONS: Record<string, string> = {
+  去逛逛: "Shop now",
+  去购买: "Shop now",
+  立即购买: "Buy now",
+  详细了解: "Learn more",
+  了解详情: "Learn more",
+  去看看: "Learn more",
+  立即下载: "Download",
+  下载: "Download",
+  立即注册: "Sign up",
+  联系我们: "Contact us",
+  立即预订: "Book now",
+  立即订购: "Order now",
+};
+
 /** Maps one raw PipiSpy item to an Ad. Returns null when the item lacks the
  * essentials (id, brand, playable video) rather than inventing placeholders. */
 export function adFromPipiSpyItem(item: PipiSpyItem): Ad | null {
@@ -58,7 +76,7 @@ export function adFromPipiSpyItem(item: PipiSpyItem): Ad | null {
     brand: item.app_name,
     platform: item.platform === 1 ? "tiktok" : "facebook",
     description: item.desc ?? "",
-    buttonText: item.button_text ?? "",
+    buttonText: translateButtonText(item.button_text ?? ""),
     coverUrl: item.cover ?? "",
     videoUrl: item.video_url,
     durationSeconds: item.duration ?? 0,
@@ -70,4 +88,9 @@ export function adFromPipiSpyItem(item: PipiSpyItem): Ad | null {
     shareCount: item.share_count ?? 0,
     providerTranscript: item.ai_analysis_script?.trim() || null,
   };
+}
+
+function translateButtonText(buttonText: string): string {
+  const trimmed = buttonText.trim();
+  return BUTTON_TEXT_TRANSLATIONS[trimmed] ?? trimmed;
 }

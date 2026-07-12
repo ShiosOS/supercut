@@ -53,6 +53,53 @@ describe("buildTally", () => {
     expect(tally.formats[0]?.brandCount).toBe(3);
   });
 
+  test("video lengths land in ordered buckets with honest denominators", () => {
+    const lengths = [
+      { ...demoAd("d1", "Acme"), ad: makeAd({ id: "d1", durationSeconds: 12 }) },
+      { ...demoAd("d2", "Bravo"), ad: makeAd({ id: "d2", brand: "Bravo", durationSeconds: 28 }) },
+      {
+        ...demoAd("d3", "Clipper"),
+        ad: makeAd({ id: "d3", brand: "Clipper", durationSeconds: 75 }),
+      },
+      // Unknown duration: drops out of the stat, shrinking its denominator.
+      { ...demoAd("d4", "Delta"), ad: makeAd({ id: "d4", brand: "Delta", durationSeconds: 0 }) },
+    ];
+    const tally = buildTally(lengths, 3);
+    const videoLength = tally.formats[0]?.videoLength;
+    expect(videoLength?.total).toBe(3);
+    expect(videoLength?.counts.map((c) => c.label)).toEqual(["under 15s", "15-30s", "over 60s"]);
+    expect(tally.formats[0]?.medianVideoSeconds).toBe(28);
+  });
+
+  test("platform mix is tallied per format", () => {
+    const mixed = [
+      { ...demoAd("d1", "Acme"), ad: makeAd({ id: "d1", platform: "tiktok" }) },
+      { ...demoAd("d2", "Bravo"), ad: makeAd({ id: "d2", brand: "Bravo", platform: "tiktok" }) },
+      {
+        ...demoAd("d3", "Clipper"),
+        ad: makeAd({ id: "d3", brand: "Clipper", platform: "facebook" }),
+      },
+    ];
+    const tally = buildTally(mixed, 3);
+    const platform = tally.formats[0]?.platform;
+    expect(platform?.counts.find((c) => c.label === "tiktok")?.count).toBe(2);
+  });
+
+  test("button text is tallied, skipping ads without a button", () => {
+    const buttons = [
+      { ...demoAd("d1", "Acme"), ad: makeAd({ id: "d1", buttonText: "Shop now" }) },
+      {
+        ...demoAd("d2", "Bravo"),
+        ad: makeAd({ id: "d2", brand: "Bravo", buttonText: "Shop now" }),
+      },
+      { ...demoAd("d3", "Clipper"), ad: makeAd({ id: "d3", brand: "Clipper", buttonText: "" }) },
+    ];
+    const tally = buildTally(buttons, 3);
+    const buttonText = tally.formats[0]?.buttonText;
+    expect(buttonText?.total).toBe(2);
+    expect(buttonText?.counts[0]).toMatchObject({ label: "Shop now", count: 2 });
+  });
+
   test("segments are tallied pool-wide", () => {
     const segmented = [
       demoAd("s1", "Acme", { segment: "beans & pods" }),

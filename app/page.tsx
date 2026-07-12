@@ -61,8 +61,8 @@ export default function HomePage() {
         </h2>
         <ScanForm />
         <p className="mt-3 text-sm text-stone-500">
-          A scan pulls ~200 ads, watches up to 70 videos, and takes 20–60 minutes. Needs
-          PIPISPY_API_KEY and OPENROUTER_API_KEY in .env.
+          A scan pulls ~240 ads, watches up to 70 videos in parallel, and takes about a minute.
+          Needs PIPISPY_API_KEY and OPENROUTER_API_KEY in .env.
         </p>
       </section>
     </div>

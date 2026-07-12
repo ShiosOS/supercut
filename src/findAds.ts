@@ -55,11 +55,17 @@ export async function findAds(market: string): Promise<FindAdsResult> {
     })),
   ];
 
+  // The six angles together equal the search budget exactly, so they can all
+  // run at once; results merge in angle order to keep the pool deterministic.
+  if (angles.length * ADS_PER_SEARCH_ANGLE > MAX_ADS_SEARCHED) {
+    throw new Error("search angles exceed the credit budget — adjust constants.ts");
+  }
+  const resultsByAngle = await Promise.all(angles.map((angle) => searchAds(market, angle)));
+
   const seen = new Map<string, Ad>();
   let searched = 0;
-  for (const angle of angles) {
-    if (searched >= MAX_ADS_SEARCHED) break;
-    const items = await searchAds(market, angle);
+  for (const [angleIndex, items] of resultsByAngle.entries()) {
+    const angle = angles[angleIndex];
     searched += items.length;
     for (const item of items) {
       const ad = adFromPipiSpyItem(item);
@@ -68,7 +74,7 @@ export async function findAds(market: string): Promise<FindAdsResult> {
       }
     }
     console.log(
-      `  findAds: "${angle.keyword}" sort=${angle.sort} → pool now ${seen.size} ads (${searched} searched)`,
+      `  findAds: "${angle?.keyword}" sort=${angle?.sort} → pool now ${seen.size} ads (${searched} searched)`,
     );
   }
   return { ads: [...seen.values()], searched };

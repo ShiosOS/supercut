@@ -31,6 +31,12 @@ export interface FormatTally {
   brandCount: number;
   medianDaysRunning: number;
   medianMeasuredCutsFirst10s: number;
+  /** Over ads with a known duration only — the total is that subset. */
+  videoLength: Distribution;
+  medianVideoSeconds: number;
+  platform: Distribution;
+  /** The ad unit's actual button label; ads without a button drop out. */
+  buttonText: Distribution;
   hookStyle: Distribution;
   productOnScreen: Distribution;
   ctaStyle: Distribution;
@@ -89,12 +95,22 @@ export function buildTally(pool: AdFacts[], minAdsForChapter: number): Tally {
 }
 
 function tallyFormat(formatLabel: FactSheet["formatLabel"], members: AdFacts[]): FormatTally {
+  // Metadata stats use only the ads that have the field, so every "N of M"
+  // keeps an honest denominator (Facebook ads often lack play/duration data).
+  const withDuration = members.filter((facts) => facts.ad.durationSeconds > 0);
+  const withButton = members.filter((facts) => facts.ad.buttonText.trim() !== "");
   return {
     formatLabel,
     adIds: members.map((facts) => facts.ad.id),
     brandCount: new Set(members.map((facts) => facts.ad.brand)).size,
     medianDaysRunning: median(members.map((facts) => facts.ad.daysRunning)),
     medianMeasuredCutsFirst10s: median(members.map((facts) => facts.measuredCutsFirst10s)),
+    videoLength: inBucketOrder(
+      distribution(withDuration, (facts) => lengthBucket(facts.ad.durationSeconds)),
+    ),
+    medianVideoSeconds: median(withDuration.map((facts) => facts.ad.durationSeconds)),
+    platform: distribution(members, (facts) => facts.ad.platform),
+    buttonText: distribution(withButton, (facts) => facts.ad.buttonText.trim()),
     hookStyle: distribution(members, (facts) => facts.factSheet.hookStyle),
     productOnScreen: distribution(members, (facts) => facts.factSheet.productOnScreen),
     ctaStyle: distribution(members, (facts) => facts.factSheet.ctaStyle),
@@ -117,6 +133,21 @@ function distribution(pool: AdFacts[], getLabel: (facts: AdFacts) => string): Di
   }));
   counts.sort((a, b) => b.count - a.count);
   return { total: pool.length, counts };
+}
+
+const LENGTH_BUCKETS = ["under 15s", "15-30s", "30-60s", "over 60s"] as const;
+
+function lengthBucket(durationSeconds: number): string {
+  if (durationSeconds < 15) return "under 15s";
+  if (durationSeconds <= 30) return "15-30s";
+  if (durationSeconds <= 60) return "30-60s";
+  return "over 60s";
+}
+
+/** Length buckets read shortest-to-longest, not biggest-count-first. */
+function inBucketOrder(dist: Distribution): Distribution {
+  const order = (label: string) => LENGTH_BUCKETS.indexOf(label as (typeof LENGTH_BUCKETS)[number]);
+  return { ...dist, counts: [...dist.counts].sort((a, b) => order(a.label) - order(b.label)) };
 }
 
 function groupBy<K extends string>(pool: AdFacts[], getKey: (facts: AdFacts) => K) {

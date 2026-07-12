@@ -65,6 +65,28 @@ describe("buildQaReport", () => {
     });
   });
 
+  test("flags ads labeled no-ask that carry a purchase button", () => {
+    const report = buildQaReport([
+      {
+        ad: makeAd({ id: "mismatch", buttonText: "Shop now" }),
+        factSheet: makeFactSheet({ ctaStyle: "none" }),
+        measuredCutsFirst10s: 4,
+      },
+      {
+        // "Learn more" is a soft button; a no-ask label is consistent with it.
+        ad: makeAd({ id: "soft-button", buttonText: "Learn more" }),
+        factSheet: makeFactSheet({ ctaStyle: "none" }),
+        measuredCutsFirst10s: 4,
+      },
+      {
+        ad: makeAd({ id: "consistent", buttonText: "Shop now" }),
+        factSheet: makeFactSheet({ ctaStyle: "hard" }),
+        measuredCutsFirst10s: 4,
+      },
+    ]);
+    expect(report.ctaDiscrepancy).toEqual({ count: 1, adIds: ["mismatch"] });
+  });
+
   test("on-screen text hooks are not checkable against audio transcripts", () => {
     const report = buildQaReport([
       {

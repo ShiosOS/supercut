@@ -54,7 +54,7 @@ function questionnairePrompt(market: string): string {
     "You are analyzing ONE paid social video ad. Answer the questionnaire about this ad only.",
     `The market being studied is "${market}".`,
     "Rules:",
-    `- marketFit: "core product" only if the ad sells the ${market} product itself. "adjacent product" only for gear used to prepare, store, serve, or consume it. "off-market" for everything else — including products that merely contain the word "${market}" in their name (like furniture or games), themed merchandise (apparel, decor, gifts about ${market}), courses, apps that are not primarily for buying ${market}, and unrelated goods. Judge by what is sold, not what is shown or mentioned.`,
+    `- marketFit: "core product" only if the ad sells the ${market} product itself. "adjacent product" only for gear made specifically to prepare, store, serve, or consume it. "off-market" for everything else — including products that merely contain the word "${market}" in their name (like furniture or games), themed merchandise (apparel, decor, gifts about ${market}), personalized or custom-photo gift items (they sell the personalization, not ${market}), general kitchen appliances not specific to ${market} (water filters, kettles, blenders), courses, apps that are not primarily for buying ${market}, and unrelated goods. Judge by what is sold, not what is shown or mentioned.`,
     "- spokenHookQuote must be VERBATIM from the audio or on-screen text. Empty string if neither exists.",
     "- Report timing only in the coarse options given. Do not guess precise seconds.",
     "- estimatedCutsFirst10s: count hard cuts you can actually see in the first 10 seconds.",

@@ -41,13 +41,17 @@ export function renderChapter(
   <span><b>${format.brandCount}</b> brands</span>
   <span><b>${format.medianDaysRunning}</b> median days live</span>
   <span><b>${format.medianMeasuredCutsFirst10s}</b> median cuts in first 10s</span>
+  ${format.medianVideoSeconds > 0 ? `<span><b>${Math.round(format.medianVideoSeconds)}s</b> median length</span>` : ""}
 </div>
+${platformLine(format.platform)}
 ${thin}
 <p>${escapeHtml(prose?.intro ?? "")}</p>
 ${withFrames.length > 0 ? `<h3>The first three seconds, side by side</h3>${frameStrip(withFrames.map(exemplarFigure))}` : ""}
 ${barChart(format.hookStyle, "How these ads open")}
 ${barChart(format.productOnScreen, "When the product first appears")}
+${format.videoLength.total > 0 ? barChart(format.videoLength, "How long they are") : ""}
 ${barChart(format.ctaStyle, "How they ask for the click")}
+${format.buttonText.total > 0 ? barChart(format.buttonText, "The button under the ad") : ""}
 <h3>How to shoot it</h3>
 ${checklist(prose?.howToShoot ?? [])}
 <h3>Examples that lasted</h3>
@@ -55,6 +59,19 @@ ${exemplars.map(renderExemplarRow).join("")}
 <h3>Watch out</h3>
 <p>${escapeHtml(prose?.watchOut ?? "")}</p>
 </section>`;
+}
+
+/** One plain sentence on where the format runs — TikTok-native, Meta-native,
+ * or split — because that changes how a strategist briefs it. */
+function platformLine(platform: FormatTally["platform"]): string {
+  if (platform.total === 0 || platform.counts.length === 0) return "";
+  const display = (label: string) => (label === "tiktok" ? "TikTok" : "Facebook");
+  const top = platform.counts[0];
+  if (top && top.count / platform.total >= 0.8) {
+    return `<p class="count-tag">This format lives on ${display(top.label)}: ${top.count} of ${platform.total} ads.</p>`;
+  }
+  const parts = platform.counts.map((entry) => `${display(entry.label)} (${entry.count})`);
+  return `<p class="count-tag">Runs on ${parts.join(" and ")}.</p>`;
 }
 
 function exemplarFigure(exemplar: ExemplarView) {

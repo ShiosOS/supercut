@@ -11,9 +11,11 @@ import {
   MIN_ADS_FOR_CHAPTER,
   MIN_ADS_FOR_PLAYBOOK,
   STUDY_SCORE_WEIGHTS,
+  WATCH_CONCURRENCY,
 } from "./constants";
 import { generateBrandBrief } from "./brief";
-import { dataPaths, marketSlug, writeJson } from "./dataDir";
+import { mapWithConcurrency } from "./concurrency";
+import { dataPaths, marketSlug, readJsonIfExists, writeJson } from "./dataDir";
 import { capPerBrand, dedupeCreatives } from "./dedupe";
 import { buildExemplarsByFormat } from "./exemplars";
 import { explainTally } from "./explain";
@@ -25,7 +27,7 @@ import { renderBriefBlock } from "./render/briefBlock";
 import { renderPlaybook } from "./render/playbook";
 import { buildTally } from "./tally";
 import { triageByMetadata } from "./triage";
-import { watchAd } from "./watchAd";
+import { watchAd, type Mechanicals, type MechanicalsCache } from "./watchAd";
 
 const market = process.argv[2];
 const sampleBriefBrand = argValue("--sample-brief");
@@ -41,32 +43,54 @@ const progress = (
   toWatch = 0,
 ) => writeProgress({ market, stage, detail, watched, toWatch, updatedAt: "" });
 
+// Stage timing goes to the scan log so slow runs can be diagnosed at a glance.
+let stageStartedAt = Date.now();
+function logStageDone(stage: string): void {
+  console.log(`${stage}: ${((Date.now() - stageStartedAt) / 1000).toFixed(1)}s`);
+  stageStartedAt = Date.now();
+}
+
 try {
   await progress("searching", "pulling candidate ads from the ad library");
   const { ads: candidates, searched } = await findAds(market);
   console.log(`pool: ${candidates.length} admitted candidates (30+ days, seen in last 30)`);
+  logStageDone("findAds");
 
   // Spend the watch budget on likely on-market ads first; the real gate
   // still judges every watched ad from the video itself.
   const ordered = await triageByMetadata(market, candidates);
   const toWatch = ordered.slice(0, MAX_ADS_WATCHED);
-  const watched: Extract<Awaited<ReturnType<typeof watchAd>>, { status: "watched" }>[] = [];
-  const skips: { adId: string; brand: string; reason: string }[] = [];
-  for (const [index, ad] of toWatch.entries()) {
+  logStageDone("triage");
+
+  // Ads are watched in parallel; the mechanicals cache is loaded once here,
+  // filled in memory, and persisted once after the phase.
+  const mechanicalsCache: MechanicalsCache = new Map(
+    Object.entries(
+      (await readJsonIfExists<Record<string, Mechanicals>>(dataPaths.mechanicals(market))) ?? {},
+    ),
+  );
+  let completed = 0;
+  await progress("watching", `watching ${toWatch.length} ads`, 0, toWatch.length);
+  const outcomesByAd = await mapWithConcurrency(toWatch, WATCH_CONCURRENCY, async (ad) => {
+    const outcome = await watchAd(market, ad, mechanicalsCache);
+    completed += 1;
     await progress(
       "watching",
-      `watching ad ${index + 1} of ${toWatch.length}`,
-      index,
+      `watched ${completed} of ${toWatch.length} ads`,
+      completed,
       toWatch.length,
     );
-    const outcome = await watchAd(market, ad);
-    if (outcome.status === "watched") watched.push(outcome);
-    else {
-      skips.push(outcome);
-      console.log(`  skip ${ad.id} (${ad.brand}): ${outcome.reason}`);
-    }
-  }
+    return outcome;
+  });
+  await writeJson(dataPaths.mechanicals(market), Object.fromEntries(mechanicalsCache));
+
+  const watched = outcomesByAd.flatMap((outcome) =>
+    outcome.status === "watched" ? [outcome] : [],
+  );
+  const skips = outcomesByAd.flatMap((outcome) => (outcome.status === "skipped" ? [outcome] : []));
+  for (const skip of skips) console.log(`  skip ${skip.adId} (${skip.brand}): ${skip.reason}`);
   console.log(`watched: ${watched.length}, skipped: ${skips.length}`);
+  logStageDone("watch");
 
   const uniqueCreatives = dedupeCreatives(
     watched.map(({ facts, fingerprint }) => ({ ad: facts.ad, fingerprint })),
@@ -100,7 +124,11 @@ try {
   const qa = buildQaReport(pool);
 
   await progress("explaining", "writing chapters from the counted patterns");
+  // Exemplars need only the tally, not the prose, so they build (frames read,
+  // permalinks fetched) while the explain call is in flight.
+  const exemplarsPromise = buildExemplarsByFormat(market, tally, pool);
   const prose = await explainTally(market, tally, qa);
+  logStageDone("explain");
   await writeJson(dataPaths.tallies(market), {
     market,
     generatedAt: new Date().toISOString(),
@@ -115,6 +143,7 @@ try {
         await generateBrandBrief(market, sampleBriefBrand, tally, prose),
       )
     : undefined;
+  if (sampleBriefBrand) logStageDone("sample brief");
 
   await progress("rendering", "assembling the playbook");
   const html = renderPlaybook({
@@ -131,7 +160,7 @@ try {
     prose,
     qa,
     appendix: { rejections, skips },
-    exemplarsByFormat: await buildExemplarsByFormat(market, tally, pool),
+    exemplarsByFormat: await exemplarsPromise,
     studyScoreWeights: STUDY_SCORE_WEIGHTS,
     sampleBriefHtml,
   });
@@ -139,6 +168,7 @@ try {
   const outputPath = path.join("examples", `${marketSlug(market)}.html`);
   await Bun.write(outputPath, html);
   await progress("done", `playbook written to ${outputPath}`);
+  logStageDone("render");
   console.log(`done: ${outputPath} (${(html.length / 1024 / 1024).toFixed(2)} MB)`);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

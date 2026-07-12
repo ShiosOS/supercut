@@ -101,12 +101,21 @@ running; spend says someone kept paying for it. Together the admission thesis
 becomes "ran a long time with real money behind it", which the playbook
 methodology states in plain words.
 
-## Shares weigh more than plays in the study score
+## Engagement is a rate, not a count
 
-**Choice:** the engagement component now ranks by plays plus 100× shares
-(`SHARE_WORTH_IN_PLAYS`). A play is often an accident of the feed; a share is
-a deliberate endorsement of the creative. The multiplier is printed in every
-playbook footnote so the ranking stays inspectable.
+**Choice:** the study score's engagement component is likes-plus-weighted-
+shares per play (`SHARE_WORTH_IN_LIKES` = 5, because passing an ad on is a
+stronger endorsement than tapping like), with a 10k-plays floor
+(`MIN_PLAYS_FOR_ENGAGEMENT_RATE`) below which the rate is treated as zero.
+
+**Why:** plays on a paid ad are bought — raw counts mostly measure budget,
+so ranking on them would crown the biggest spenders, not the best creative.
+A rate asks what viewers did once the ad reached them. The floor exists
+because tiny denominators produce fake-high rates (180 likes on 200 plays).
+Ads with no play data — common on Facebook — score zero on engagement and
+rank on longevity and label confidence alone. Raw plays stay visible in the
+playbook for context; they just don't drive the ranking. The formula is
+printed in every playbook footnote so the ranking stays inspectable.
 
 ## The detail endpoint: wired for exemplar permalinks only
 
@@ -125,6 +134,26 @@ examples), cache it per ad id, and render the permalink ("watch the ad") in
 the example rows. A live link is the strongest receipt a playbook can offer.
 Detail is not fetched for the rest of the pool — nothing in the tallies uses
 it, so it would be spend without a reader benefit.
+
+## No zombie cap on delivery days
+
+`put_day_max` exists, so multi-year evergreen assets could be capped out of
+the pool (say at 730 days). Deliberately not done: a 900-day survivor is the
+strongest single piece of evidence this data offers, and the recency filter
+already guarantees it was seen delivering within the last 30 days — it is
+what's working now, it just started working a long time ago. The observed
+median pool age (~190 days) shows old veterans are not drowning the tallies,
+and the per-chapter "median days live" makes their presence visible rather
+than hidden. If a future market turns up a pool dominated by 2+ year assets,
+that median is where it will show first.
+
+## Considered and cut: a like-rate sort stratum
+
+The list endpoint offers `sort: 7` (like rate). Cut: engagement rate already
+enters the system through the study score, where it can be floored and
+weighted, and a fifth keyword pull would spend another 40 credits for
+marginal pool diversity — the four existing strata already over-fill the
+watch budget.
 
 ## Scoped out: advertiser-anchored scans and Meta reach data
 
@@ -195,6 +224,21 @@ unit this tool studies.
 trustworthy and fine enough to matter (the first 3 seconds are the scroll-stop
 window). Mechanical facts that need precision — cut counts in the first 10
 seconds — come from ffmpeg scene detection, not the model.
+
+## The watch phase runs in parallel
+
+**Choice:** ads are watched 32 at a time (`WATCH_CONCURRENCY`), the six
+search pulls run at once, triage runs as four parallel caption chunks, hook
+frames come from one ffmpeg pass per ad instead of four, and exemplars build
+while the explain call is in flight. The scan is network-bound — the model
+call dominates at several seconds per ad — so the sequential version took
+15–25 minutes while doing almost no local work. Parallel, a measured cold
+scan (nothing cached but the searches) finishes in under a minute.
+
+**Consequence:** the per-ad mechanicals cache became a shared in-memory map
+that the entrypoint loads and persists once per run. Thirty-two tasks doing
+read-modify-write on one JSON file would corrupt it; thirty-two tasks
+mutating one Map on a single-threaded event loop cannot.
 
 ## Videos are transient
 
