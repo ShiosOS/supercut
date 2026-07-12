@@ -66,6 +66,18 @@ not the model. Verified locally on ffmpeg 6.1.1 before any pipeline code:
 - An 8×8 grayscale raw frame (64 bytes) is enough for an average-hash
   perceptual fingerprint, used to collapse re-uploads of the same creative.
 
+## The relevance gate earns its keep
+
+**Finding (recon):** the very first "coffee" keyword pull returned a lip-balm
+ad as its top engagement result — the transcript happened to mention coffee.
+Keyword search over ad libraries leaks constantly (courses, recipes, unrelated
+products that mention the market word).
+
+**Choice:** the questionnaire asks what each ad actually sells and the gate
+drops off-market ads before any counting, reporting each rejection with its
+reason in the playbook appendix. Noise becomes a visible, measured step
+instead of silent contamination.
+
 ## One video model, coarse claims only
 
 **Choice:** `google/gemini-3-flash-preview` via OpenRouter (video accepted as a
