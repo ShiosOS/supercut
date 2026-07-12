@@ -34,8 +34,8 @@ export const PLAYBOOK_CSS = `
   .meta-row b { color: var(--ink); font-size: 15px; }
   .bar-row { display: grid; grid-template-columns: 170px 1fr 70px; gap: 10px; align-items: center;
     margin: 6px 0; font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif; font-size: 13px; }
-  .bar-track { background: #eeebe5; border-radius: 3px; height: 14px; }
-  .bar-fill { background: var(--accent); opacity: .85; border-radius: 3px; height: 14px; }
+  .bar-track { display: block; background: #eeebe5; border-radius: 3px; height: 14px; }
+  .bar-fill { display: block; background: var(--accent); opacity: .85; border-radius: 3px; height: 14px; }
   .bar-count { color: var(--muted); text-align: right; }
   ul.checklist { list-style: none; margin: 8px 0 16px; }
   ul.checklist li { padding: 8px 0 8px 26px; position: relative; border-top: 1px solid var(--line); }
