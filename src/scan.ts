@@ -114,6 +114,9 @@ try {
   const qa = buildQaReport(pool);
 
   await progress("explaining", "writing chapters from the counted patterns");
+  // Exemplars need only the tally, not the prose, so they build (frames read,
+  // permalinks fetched) while the explain call is in flight.
+  const exemplarsPromise = buildExemplarsByFormat(market, tally, pool);
   const prose = await explainTally(market, tally, qa);
   await writeJson(dataPaths.tallies(market), {
     market,
@@ -145,7 +148,7 @@ try {
     prose,
     qa,
     appendix: { rejections, skips },
-    exemplarsByFormat: await buildExemplarsByFormat(market, tally, pool),
+    exemplarsByFormat: await exemplarsPromise,
     studyScoreWeights: STUDY_SCORE_WEIGHTS,
     sampleBriefHtml,
   });

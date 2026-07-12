@@ -35,7 +35,7 @@ export const MAX_ADS_WATCHED = 70;
 /** Ads watched in parallel. The watch phase is network-bound (the model call
  * dominates), so this is what holds a scan to about a minute; ffmpeg's work
  * per ad is brief enough that 4 cores keep up. */
-export const WATCH_CONCURRENCY = 24;
+export const WATCH_CONCURRENCY = 32;
 
 /** Videos longer than this are skipped: they cost disproportionately and are
  * rarely the repeatable paid-social unit this tool studies. */
