@@ -4,7 +4,7 @@
 // re-run never downloads or re-describes an ad it has already seen.
 
 import type { Ad } from "./ad";
-import { MAX_VIDEO_MEGABYTES, MAX_VIDEO_SECONDS } from "./constants";
+import { MAX_VIDEO_MEGABYTES, MAX_VIDEO_SECONDS, SCENE_CUT_THRESHOLD } from "./constants";
 import { dataPaths, readJsonIfExists, writeJson } from "./dataDir";
 import { describeAd, readCachedFactSheet } from "./describe";
 import {
@@ -24,6 +24,9 @@ export type WatchOutcome =
 interface Mechanicals {
   fingerprint: Fingerprint;
   measuredCutsFirst10s: number;
+  /** Cut counts depend on the detection threshold; a cached count measured
+   * with a different threshold must be re-measured, not trusted. */
+  sceneCutThreshold: number;
 }
 
 type MechanicalsFile = Record<string, Mechanicals>;
@@ -50,7 +53,11 @@ export async function watchAd(market: string, ad: Ad): Promise<WatchOutcome> {
       const measuredCutsFirst10s = await countCutsFirst10s(videoPath);
       await extractHookFrames(videoPath, (index) => dataPaths.hookFrame(market, ad.id, index));
       const factSheet = await describeAd(market, ad, videoPath);
-      await saveMechanicals(market, ad.id, { fingerprint, measuredCutsFirst10s });
+      await saveMechanicals(market, ad.id, {
+        fingerprint,
+        measuredCutsFirst10s,
+        sceneCutThreshold: SCENE_CUT_THRESHOLD,
+      });
       return {
         status: "watched" as const,
         facts: { ad, factSheet, measuredCutsFirst10s },
@@ -69,7 +76,7 @@ async function readFromCache(market: string, ad: Ad): Promise<WatchOutcome | nul
   if (!factSheet) return null;
   const mechanicalsFile = await readJsonIfExists<MechanicalsFile>(dataPaths.mechanicals(market));
   const mechanicals = mechanicalsFile?.[ad.id];
-  if (!mechanicals) return null;
+  if (!mechanicals || mechanicals.sceneCutThreshold !== SCENE_CUT_THRESHOLD) return null;
   return {
     status: "watched",
     facts: { ad, factSheet, measuredCutsFirst10s: mechanicals.measuredCutsFirst10s },

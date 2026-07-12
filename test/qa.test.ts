@@ -24,7 +24,7 @@ describe("buildQaReport", () => {
     expect(report.lowConfidenceFormatAdIds).toEqual(["unsure"]);
   });
 
-  test("corroborates hook quotes against the provider transcript when present", () => {
+  test("corroborates spoken hook quotes against the provider transcript", () => {
     const report = buildQaReport([
       {
         ad: makeAd({ id: "match", providerTranscript: "this is the SMOOTHEST cold brew ever, trust me" }),
@@ -45,8 +45,24 @@ describe("buildQaReport", () => {
     expect(report.hookQuotes).toEqual({
       corroborated: 1,
       contradicted: 1,
-      noTranscript: 1,
+      notCheckable: 1,
       contradictedAdIds: ["mismatch"],
     });
+  });
+
+  test("on-screen text hooks are not checkable against audio transcripts", () => {
+    const report = buildQaReport([
+      {
+        // ASR cannot hear on-screen text, so a missing match proves nothing.
+        ad: makeAd({ id: "text-hook", providerTranscript: "totally different words here" }),
+        factSheet: makeFactSheet({
+          spokenHookQuote: "POV: your coffee in 10 seconds",
+          hookQuoteSource: "on-screen text",
+        }),
+        measuredCutsFirst10s: 4,
+      },
+    ]);
+    expect(report.hookQuotes.notCheckable).toBe(1);
+    expect(report.hookQuotes.contradicted).toBe(0);
   });
 });

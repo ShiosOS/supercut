@@ -52,6 +52,9 @@ export const factSheetSchema = z.object({
     .describe(
       "Verbatim first spoken or on-screen-text line of the hook. Empty string if there is none.",
     ),
+  hookQuoteSource: z
+    .enum(["spoken", "on-screen text", "none"])
+    .describe("Where the quoted hook line comes from: the audio, on-screen text, or neither."),
   firstThreeSeconds: z
     .string()
     .describe("What literally happens on screen in the first 3 seconds, one sentence."),

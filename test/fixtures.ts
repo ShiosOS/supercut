@@ -34,6 +34,7 @@ export function makeFactSheet(overrides: Partial<FactSheet> = {}): FactSheet {
     formatConfidence: "high",
     hookStyle: "bold claim",
     spokenHookQuote: "This is the smoothest cold brew ever",
+    hookQuoteSource: "spoken",
     firstThreeSeconds: "A hand pours dark coffee over ice in a glass",
     productOnScreen: "first 3 seconds",
     creatorVsBrandFeel: "creator",

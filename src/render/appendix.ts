@@ -63,13 +63,13 @@ function skipsBlock(skips: AppendixInput["skips"]): string {
 }
 
 function hookQuoteBlock(qa: QaReport): string {
-  const { corroborated, contradicted, noTranscript, contradictedAdIds } = qa.hookQuotes;
+  const { corroborated, contradicted, notCheckable, contradictedAdIds } = qa.hookQuotes;
   const checked = corroborated + contradicted;
   if (checked === 0) {
-    return `<p>The ad library had no transcripts for this pool (${noTranscript} ads), so hook quotes rest on the AI's transcription alone.</p>`;
+    return `<p>No hook quotes could be cross-checked in this pool (${notCheckable} ads had on-screen-text hooks, no hook, or no library transcript), so quotes rest on the AI's transcription alone.</p>`;
   }
-  return `<p>Where the ad library had its own transcript (${checked} ads), the AI's quoted hooks matched it ${corroborated} times and disagreed ${contradicted} time${contradicted === 1 ? "" : "s"}${contradictedAdIds.length > 0 ? ` (ad${contradictedAdIds.length === 1 ? "" : "s"} ${contradictedAdIds.map(escapeHtml).join(", ")})` : ""}.
-The other ${noTranscript} ads had no transcript to check against.</p>`;
+  return `<p>Where a spoken hook could be checked against the ad library's own transcript (${checked} ads), the AI's quote matched ${corroborated} times and disagreed ${contradicted} time${contradicted === 1 ? "" : "s"}${contradictedAdIds.length > 0 ? ` (ad${contradictedAdIds.length === 1 ? "" : "s"} ${contradictedAdIds.map(escapeHtml).join(", ")})` : ""}.
+The other ${notCheckable} ads had on-screen-text hooks, no hook, or no transcript — nothing to check against.</p>`;
 }
 
 function lowConfidenceBlock(qa: QaReport, tally: Tally): string {

@@ -47,9 +47,11 @@ export const THIN_CHAPTER_THRESHOLD = 5;
 export const MIN_EXEMPLARS_PER_CHAPTER = 2;
 export const MAX_EXEMPLARS_PER_CHAPTER = 3;
 
-/** ffmpeg scene-change threshold. 0.4 catches hard cuts without flagging
- * ordinary motion; verified against synthetic multi-scene clips. */
-export const SCENE_CUT_THRESHOLD = 0.4;
+/** ffmpeg scene-change threshold. UGC jump cuts (same room, camera shifts)
+ * score 0.2–0.35, well below the ~1.0 of a true scene change; at 0.4 ffmpeg
+ * reported zero cuts on 40 of 96 real ads that visibly had them. 0.2 matched
+ * hand-checked counts on sampled ads. */
+export const SCENE_CUT_THRESHOLD = 0.2;
 
 /** Cut counting stops here — editing rhythm of the hook window is what the
  * playbook reports ("median cuts in the first 10 seconds"). */
@@ -70,7 +72,7 @@ export const EXPLAIN_MODEL = "google/gemini-3-flash-preview";
 
 /** Bump when the FactSheet schema changes shape; cached questionnaires with an
  * older version are re-described instead of trusted. */
-export const FACT_SHEET_SCHEMA_VERSION = 1;
+export const FACT_SHEET_SCHEMA_VERSION = 2;
 
 /** Study-score weights, printed verbatim in the playbook footnote. Longevity
  * leads because it is the admission thesis; engagement breaks ties; label
