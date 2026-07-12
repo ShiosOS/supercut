@@ -1,7 +1,10 @@
 // Where every derived artifact lives on disk, in one place. The data/ tree
 // holds only small JSON and compressed frames — never videos.
 
+// node:fs (not Bun.file) so these helpers also work inside the Next.js app,
+// which runs under Node while the pipeline runs under Bun.
 import { mkdirSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /** Lowercase, hyphenated market slug used for directory and file names. */
@@ -27,12 +30,15 @@ export const dataPaths = {
 };
 
 export async function readJsonIfExists<T>(filePath: string): Promise<T | null> {
-  const file = Bun.file(filePath);
-  if (!(await file.exists())) return null;
-  return (await file.json()) as T;
+  try {
+    return JSON.parse(await readFile(filePath, "utf8")) as T;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
 }
 
 export async function writeJson(filePath: string, value: unknown): Promise<void> {
   mkdirSync(path.dirname(filePath), { recursive: true });
-  await Bun.write(filePath, JSON.stringify(value, null, 2));
+  await writeFile(filePath, JSON.stringify(value, null, 2));
 }
