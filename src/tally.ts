@@ -53,6 +53,8 @@ export interface Tally {
   poolProductOnScreen: Distribution;
   poolHookStyle: Distribution;
   poolCtaStyle: Distribution;
+  poolCreatorVsBrandFeel: Distribution;
+  poolWorksWithSoundOff: Distribution;
 }
 
 export function buildTally(pool: AdFacts[], minAdsForChapter: number): Tally {
@@ -79,6 +81,10 @@ export function buildTally(pool: AdFacts[], minAdsForChapter: number): Tally {
     poolProductOnScreen: distribution(pool, (facts) => facts.factSheet.productOnScreen),
     poolHookStyle: distribution(pool, (facts) => facts.factSheet.hookStyle),
     poolCtaStyle: distribution(pool, (facts) => facts.factSheet.ctaStyle),
+    poolCreatorVsBrandFeel: distribution(pool, (facts) => facts.factSheet.creatorVsBrandFeel),
+    poolWorksWithSoundOff: distribution(pool, (facts) =>
+      facts.factSheet.worksWithSoundOff ? "works muted" : "needs sound",
+    ),
   };
 }
 
