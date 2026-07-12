@@ -3,7 +3,8 @@
 // "examples that lasted" lists. Weights live in constants.ts and are printed
 // verbatim in the playbook footnote.
 
-import { STUDY_SCORE_WEIGHTS } from "./constants";
+import { SHARE_WORTH_IN_PLAYS, STUDY_SCORE_WEIGHTS } from "./constants";
+import type { Ad } from "./ad";
 import type { AdFacts } from "./tally";
 
 export interface StudyScore {
@@ -19,15 +20,15 @@ const CONFIDENCE_VALUE = { high: 1, medium: 0.6, low: 0.3 } as const;
 export function scoreAds(pool: AdFacts[]): StudyScore[] {
   const maxDays = Math.max(...pool.map((facts) => facts.ad.daysRunning), 1);
   // log10 tames the heavy tail: 10M plays should not drown 100k entirely.
-  const maxLogPlays = Math.max(
-    ...pool.map((facts) => Math.log10(facts.ad.playCount + 1)),
+  const maxLogEngagement = Math.max(
+    ...pool.map((facts) => Math.log10(engagementSignal(facts.ad) + 1)),
     1,
   );
 
   const scored = pool.map((facts): StudyScore => {
     const components = {
       longevity: facts.ad.daysRunning / maxDays,
-      engagement: Math.log10(facts.ad.playCount + 1) / maxLogPlays,
+      engagement: Math.log10(engagementSignal(facts.ad) + 1) / maxLogEngagement,
       formatConfidence: CONFIDENCE_VALUE[facts.factSheet.formatConfidence],
     };
     const score =
@@ -38,6 +39,12 @@ export function scoreAds(pool: AdFacts[]): StudyScore[] {
   });
 
   return scored.sort((a, b) => b.score - a.score);
+}
+
+/** Plays plus shares, with each share counted as many plays: sharing is a
+ * deliberate endorsement of the creative, watching is often an accident. */
+function engagementSignal(ad: Ad): number {
+  return ad.playCount + ad.shareCount * SHARE_WORTH_IN_PLAYS;
 }
 
 /** Top ads for a frame strip or example list: best scores first, but at most

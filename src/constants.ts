@@ -90,3 +90,7 @@ export const STUDY_SCORE_WEIGHTS = {
   engagement: 0.3,
   formatConfidence: 0.2,
 } as const;
+
+/** Inside the engagement component, one share counts as this many plays.
+ * Passing a creative on is a deliberate endorsement; being watched is not. */
+export const SHARE_WORTH_IN_PLAYS = 100;

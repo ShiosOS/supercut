@@ -2,6 +2,7 @@
 // read from file://, email, or print. All numbers come straight from the
 // Tally; the model's prose only ever sits next to a count that code produced.
 
+import { SHARE_WORTH_IN_PLAYS } from "../constants";
 import type { PlaybookProse } from "../explain";
 import type { QaReport } from "../qa";
 import type { Tally } from "../tally";
@@ -82,7 +83,8 @@ ${renderAppendix(input.appendix, input.qa, tally)}
 <footer>
 <p>Study ranking: ads are ordered for the example lists by a score of
 ${Object.entries(input.studyScoreWeights).map(([name, weight]) => `${name} ×${weight}`).join(" + ")},
-each part normalized within this pool, with at most one ad per brand in any list.</p>
+each part normalized within this pool, with at most one ad per brand in any list.
+Inside the engagement part, one share counts as ${SHARE_WORTH_IN_PLAYS} plays — passing an ad on is a deliberate endorsement, being watched often is not.</p>
 <p>Made with Supercut. Days-running and play counts come from the ad library data; "still delivering" means seen in the last 30 days, the closest signal the data offers to "currently live".</p>
 </footer>
 </main></body></html>`;

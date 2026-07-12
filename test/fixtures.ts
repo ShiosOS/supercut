@@ -20,6 +20,7 @@ export function makeAd(overrides: Partial<Ad> = {}): Ad {
     lastSeenAt: 1_755_000_000,
     playCount: 100_000,
     likeCount: 2_000,
+    shareCount: 300,
     providerTranscript: null,
     ...overrides,
   };

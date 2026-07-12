@@ -21,6 +21,9 @@ export interface Ad {
   lastSeenAt: number;
   playCount: number;
   likeCount: number;
+  /** Shares are a stronger endorsement of a creative than plays or likes;
+   * the study score weights them accordingly. */
+  shareCount: number;
   /** Provider ASR transcript. Often missing; corroboration only. */
   providerTranscript: string | null;
 }
@@ -40,6 +43,7 @@ export const pipiSpyItemSchema = z.object({
   last_put_time: z.number().nullish(),
   play_count: z.number().nullish(),
   digg_count: z.number().nullish(),
+  share_count: z.number().nullish(),
   ai_analysis_script: z.string().nullish(),
 });
 
@@ -63,6 +67,7 @@ export function adFromPipiSpyItem(item: PipiSpyItem): Ad | null {
     lastSeenAt: item.last_put_time ?? 0,
     playCount: item.play_count ?? 0,
     likeCount: item.digg_count ?? 0,
+    shareCount: item.share_count ?? 0,
     providerTranscript: item.ai_analysis_script?.trim() || null,
   };
 }

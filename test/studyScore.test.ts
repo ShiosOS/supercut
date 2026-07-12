@@ -5,9 +5,9 @@ import { describe, expect, test } from "bun:test";
 import { pickExemplars, scoreAds } from "../src/studyScore";
 import { makeAd, makeFactSheet } from "./fixtures";
 
-function facts(id: string, brand: string, daysRunning: number, playCount = 10_000) {
+function facts(id: string, brand: string, daysRunning: number, playCount = 10_000, shareCount = 0) {
   return {
-    ad: makeAd({ id, brand, daysRunning, playCount }),
+    ad: makeAd({ id, brand, daysRunning, playCount, shareCount }),
     factSheet: makeFactSheet(),
     measuredCutsFirst10s: 4,
   };
@@ -37,8 +37,19 @@ describe("scoreAds", () => {
     expect(scored[0]?.adId).toBe("clean");
   });
 
+  test("shares outweigh raw plays: a shared ad beats a merely watched one", () => {
+    const scored = scoreAds([
+      facts("shared", "Acme", 60, 100_000, 5_000),
+      facts("watched", "Bravo", 60, 400_000, 0),
+    ]);
+    expect(scored[0]?.adId).toBe("shared");
+  });
+
   test("scores stay in 0..1", () => {
-    const scored = scoreAds([facts("a", "Acme", 400, 90_000_000), facts("b", "Bravo", 31, 0)]);
+    const scored = scoreAds([
+      facts("a", "Acme", 400, 90_000_000, 500_000),
+      facts("b", "Bravo", 31, 0, 0),
+    ]);
     for (const entry of scored) {
       expect(entry.score).toBeGreaterThanOrEqual(0);
       expect(entry.score).toBeLessThanOrEqual(1);
