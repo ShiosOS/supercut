@@ -29,12 +29,14 @@ import { buildTally } from "./tally";
 import { triageByMetadata } from "./triage";
 import { watchAd, type Mechanicals, type MechanicalsCache } from "./watchAd";
 
-const market = process.argv[2];
+const marketArgument = process.argv[2];
 const sampleBriefBrand = argValue("--sample-brief");
-if (!market || market.startsWith("--")) {
+if (!marketArgument || marketArgument.startsWith("--")) {
   console.error('Usage: bun run scan <market> [--sample-brief "brand, one sentence"]');
   process.exit(1);
 }
+// The app passes the slug ("skin-care"); searches and prompts want the words.
+const market = marketArgument.replaceAll("-", " ");
 
 const progress = (
   stage: Parameters<typeof writeProgress>[0]["stage"],
@@ -119,7 +121,14 @@ try {
 
   if (pool.length < MIN_ADS_FOR_PLAYBOOK) {
     throw new Error(
-      `Only ${pool.length} relevant long-running ads found — fewer than the ${MIN_ADS_FOR_PLAYBOOK} needed to count patterns honestly. Try a broader market name.`,
+      poolStarvationReport({
+        searched,
+        candidates: candidates.length,
+        watched: watched.length,
+        skips,
+        rejected: rejections.length,
+        kept: pool.length,
+      }),
     );
   }
 
@@ -192,4 +201,41 @@ try {
 function argValue(flag: string): string | undefined {
   const index = process.argv.indexOf(flag);
   return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
+/** When too few ads survive to write a playbook, say where the funnel starved
+ * and what to do about it — this message surfaces in the app, so it has to
+ * carry the whole diagnosis. */
+function poolStarvationReport(funnel: {
+  searched: number;
+  candidates: number;
+  watched: number;
+  skips: { reason: string }[];
+  rejected: number;
+  kept: number;
+}): string {
+  const path =
+    `${funnel.searched} search results → ${funnel.candidates} long-running candidates → ` +
+    `${funnel.watched} analyzed (${funnel.skips.length} skipped) → ` +
+    `${funnel.kept} on-market after ${funnel.rejected} rejections`;
+
+  let hint = "Try a broader market name.";
+  if (funnel.candidates < MIN_ADS_FOR_PLAYBOOK) {
+    hint = "The ad library has few long-running ads for this term — try a broader market name.";
+  } else if (funnel.skips.length > funnel.watched) {
+    const counts = new Map<string, number>();
+    for (const skip of funnel.skips) counts.set(skip.reason, (counts.get(skip.reason) ?? 0) + 1);
+    const [topReason, topCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
+    hint =
+      `Most ads could not be analyzed (${topCount} of ${funnel.skips.length} skips: "${topReason}"). ` +
+      "If skips mention the AI, the model key is likely rate-limited — lower WATCH_CONCURRENCY in src/constants.ts and re-run; finished work is cached.";
+  } else if (funnel.rejected > funnel.kept) {
+    hint =
+      "Most analyzed ads sold something outside this market — try a more product-specific market name.";
+  }
+
+  return (
+    `Only ${funnel.kept} relevant long-running ads found — fewer than the ${MIN_ADS_FOR_PLAYBOOK} ` +
+    `needed to count patterns honestly. The funnel: ${path}. ${hint}`
+  );
 }
