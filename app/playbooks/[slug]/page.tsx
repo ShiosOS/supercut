@@ -1,6 +1,7 @@
 // Playbook page: the report fills the viewport below a slim toolbar that
-// holds the download link and the brand brief generator.
+// holds the way back home, the download link, and the brand brief generator.
 
+import Link from "next/link";
 import { BriefForm } from "./briefForm";
 
 export default async function PlaybookPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -9,7 +10,12 @@ export default async function PlaybookPage({ params }: { params: Promise<{ slug:
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-stone-200 bg-white px-6 py-2.5">
-        <h1 className="text-base font-bold capitalize tracking-tight">{market} playbook</h1>
+        <div className="flex items-baseline gap-4">
+          <Link href="/" className="text-sm text-stone-500 transition hover:text-stone-900">
+            ← all playbooks
+          </Link>
+          <h1 className="text-base font-bold capitalize tracking-tight">{market} playbook</h1>
+        </div>
         <div className="flex items-center gap-2">
           <details className="relative">
             <summary className="cursor-pointer list-none rounded-lg bg-orange-800 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-700">

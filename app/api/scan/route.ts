@@ -1,10 +1,13 @@
-// POST /api/scan — spawns the scan script and returns immediately. The scan
-// writes progress JSON that /api/progress reads. Deliberately no job table,
-// no PID tracking, no stale-run recovery: one scan per market at a time.
+// POST /api/scan — spawns the scan script and returns immediately; the scan
+// writes progress JSON that /api/progress reads. DELETE /api/scan removes a
+// finished scan's playbook and data. Deliberately no job table, no PID
+// tracking, no stale-run recovery: one scan per market at a time.
 
 import { spawn } from "node:child_process";
+import { rm } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
-import { marketSlug } from "@/dataDir";
+import { marketDir, marketSlug } from "@/dataDir";
 import { readProgress } from "@/progress";
 
 export async function POST(request: Request) {
@@ -32,4 +35,26 @@ export async function POST(request: Request) {
   });
   child.unref();
   return NextResponse.json({ slug });
+}
+
+export async function DELETE(request: Request) {
+  const market = new URL(request.url).searchParams.get("market");
+  if (!market) {
+    return NextResponse.json({ error: "market is required" }, { status: 400 });
+  }
+
+  // marketSlug strips everything but [a-z0-9-], so the paths below cannot
+  // escape the data/ and examples/ directories.
+  const slug = marketSlug(market);
+  const progress = await readProgress(slug);
+  if (progress && progress.stage !== "done" && progress.stage !== "failed") {
+    return NextResponse.json(
+      { error: "This scan is still running — let it finish before deleting it." },
+      { status: 409 },
+    );
+  }
+
+  await rm(marketDir(slug), { recursive: true, force: true });
+  await rm(path.join("examples", `${slug}.html`), { force: true });
+  return NextResponse.json({ deleted: slug });
 }

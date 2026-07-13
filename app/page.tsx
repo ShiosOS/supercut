@@ -2,6 +2,7 @@
 
 import { readdirSync } from "node:fs";
 import Link from "next/link";
+import { DeletePlaybookButton } from "./deletePlaybookButton";
 import { ScanForm } from "./scanForm";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default function HomePage() {
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {playbooks.map((slug) => (
-              <li key={slug}>
+              <li key={slug} className="relative">
                 <Link
                   href={`/playbooks/${slug}`}
                   className="block rounded-lg border border-stone-200 bg-white px-5 py-4 font-medium capitalize shadow-sm transition hover:border-orange-700 hover:shadow"
@@ -49,6 +50,7 @@ export default function HomePage() {
                     open playbook →
                   </span>
                 </Link>
+                <DeletePlaybookButton slug={slug} />
               </li>
             ))}
           </ul>
