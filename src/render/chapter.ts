@@ -4,7 +4,7 @@
 import { THIN_CHAPTER_THRESHOLD } from "../constants";
 import type { PlaybookProse } from "../explain";
 import type { FormatTally } from "../tally";
-import { banner, barChart, checklist, escapeHtml, frameStrip } from "./blocks";
+import { banner, barChart, checklist, escapeHtml, externalLink, frameStrip } from "./blocks";
 
 export interface ExemplarView {
   adId: string;
@@ -79,12 +79,13 @@ function exemplarFigure(exemplar: ExemplarView) {
     frameDataUrls: exemplar.frameDataUrls,
     quote: exemplar.hookQuote,
     caption: `${exemplar.brand} · ${exemplar.daysRunning} days live`,
+    adUrl: exemplar.adUrl,
   };
 }
 
 function renderExemplarRow(exemplar: ExemplarView): string {
   const quote = exemplar.hookQuote ? `Opens with: “${escapeHtml(exemplar.hookQuote)}” · ` : "";
-  const link = exemplar.adUrl ? ` · <a href="${escapeHtml(exemplar.adUrl)}">watch the ad</a>` : "";
+  const link = exemplar.adUrl ? ` · ${externalLink(exemplar.adUrl, "watch the ad")}` : "";
   return `<div class="exemplar"><span class="who">${escapeHtml(exemplar.brand)}</span><br>
 ${quote}${exemplar.daysRunning} days live · ${compactNumber(exemplar.playCount)} plays${link}</div>`;
 }

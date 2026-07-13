@@ -88,7 +88,11 @@ try {
     outcome.status === "watched" ? [outcome] : [],
   );
   const skips = outcomesByAd.flatMap((outcome) => (outcome.status === "skipped" ? [outcome] : []));
-  for (const skip of skips) console.log(`  skip ${skip.adId} (${skip.brand}): ${skip.reason}`);
+  for (const skip of skips) {
+    console.log(
+      `  skip ${skip.adId} (${skip.brand}): ${skip.reason}${skip.detail ? ` [${skip.detail}]` : ""}`,
+    );
+  }
   console.log(`watched: ${watched.length}, skipped: ${skips.length}`);
   logStageDone("watch");
 

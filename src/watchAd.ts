@@ -14,6 +14,7 @@ import {
   extractHookFrames,
   fingerprintVideo,
   probeDuration,
+  VideoUnavailableError,
   withVideo,
   type Fingerprint,
 } from "./media";
@@ -21,7 +22,15 @@ import type { AdFacts } from "./tally";
 
 export type WatchOutcome =
   | { status: "watched"; facts: AdFacts; fingerprint: Fingerprint }
-  | { status: "skipped"; adId: string; brand: string; reason: string };
+  | {
+      status: "skipped";
+      adId: string;
+      brand: string;
+      /** Plain language — this line goes into the report's appendix. */
+      reason: string;
+      /** Technical detail for the scan log only. */
+      detail?: string;
+    };
 
 export interface Mechanicals {
   fingerprint: Fingerprint;
@@ -39,10 +48,7 @@ export async function watchAd(
   mechanicalsCache: MechanicalsCache,
 ): Promise<WatchOutcome> {
   if (ad.durationSeconds > MAX_VIDEO_SECONDS) {
-    return skipped(
-      ad,
-      `video is ${Math.round(ad.durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`,
-    );
+    return skipped(ad, tooLongReason(ad.durationSeconds));
   }
 
   const cached = await readFromCache(market, ad, mechanicalsCache);
@@ -52,16 +58,14 @@ export async function watchAd(
     return await withVideo(ad.videoUrl, async (videoPath) => {
       const durationSeconds = await probeDuration(videoPath);
       if (durationSeconds > MAX_VIDEO_SECONDS) {
-        return skipped(
-          ad,
-          `video is ${Math.round(durationSeconds)}s, over the ${MAX_VIDEO_SECONDS}s limit`,
-        );
+        return skipped(ad, tooLongReason(durationSeconds));
       }
       const megabytes = (await Bun.file(videoPath).bytes()).length / 1024 / 1024;
       if (megabytes > MAX_VIDEO_MEGABYTES) {
         return skipped(
           ad,
-          `video file is ${megabytes.toFixed(0)}MB, over the ${MAX_VIDEO_MEGABYTES}MB limit`,
+          "the video file is too large to analyze",
+          `${megabytes.toFixed(0)}MB, over the ${MAX_VIDEO_MEGABYTES}MB limit`,
         );
       }
       const fingerprint = await fingerprintVideo(videoPath);
@@ -81,9 +85,31 @@ export async function watchAd(
     });
   } catch (error) {
     // One dead URL or bad model reply must never kill the run; the skip is
-    // reported in the playbook's appendix instead.
-    return skipped(ad, error instanceof Error ? error.message : String(error));
+    // reported in the playbook's appendix instead — in plain words, with the
+    // technical detail kept for the scan log.
+    return skipped(
+      ad,
+      plainSkipReason(error),
+      error instanceof Error ? error.message : String(error),
+    );
   }
+}
+
+/** Appendix lines are read by strategists, not engineers: say what happened
+ * to the ad, never what a tool printed. */
+function plainSkipReason(error: unknown): string {
+  if (error instanceof VideoUnavailableError) {
+    return "the ad's video is no longer available to download";
+  }
+  const message = error instanceof Error ? error.message : "";
+  if (message.startsWith("ffmpeg") || message.startsWith("ffprobe")) {
+    return "the video file could not be read";
+  }
+  return "the AI did not return a usable reading of this ad";
+}
+
+function tooLongReason(durationSeconds: number): string {
+  return `the video runs ${Math.round(durationSeconds)} seconds — longer than the short-form ads this report studies`;
 }
 
 async function readFromCache(
@@ -102,6 +128,6 @@ async function readFromCache(
   };
 }
 
-function skipped(ad: Ad, reason: string): WatchOutcome {
-  return { status: "skipped", adId: ad.id, brand: ad.brand, reason };
+function skipped(ad: Ad, reason: string, detail?: string): WatchOutcome {
+  return { status: "skipped", adId: ad.id, brand: ad.brand, reason, detail };
 }

@@ -14,6 +14,10 @@ import {
   SCENE_CUT_THRESHOLD,
 } from "./constants";
 
+/** Thrown when the ad's video cannot be fetched — stale CDN links are the
+ * most common per-ad failure, and downstream code phrases it for readers. */
+export class VideoUnavailableError extends Error {}
+
 /** Downloads a video, hands its temp path to `use`, deletes it afterwards.
  * Downloads go through curl: Bun's fetch intermittently hung against the ad
  * CDN mid-scan, while curl proved reliable — and --max-time guarantees a
@@ -40,7 +44,9 @@ export async function withVideo<T>(
       { stdout: "ignore", stderr: "ignore" },
     );
     const exitCode = await proc.exited;
-    if (exitCode !== 0) throw new Error(`video download failed (curl exit ${exitCode})`);
+    if (exitCode !== 0) {
+      throw new VideoUnavailableError(`video download failed (curl exit ${exitCode})`);
+    }
     return await use(videoPath);
   } finally {
     rmSync(dir, { recursive: true, force: true });

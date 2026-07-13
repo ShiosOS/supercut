@@ -41,10 +41,13 @@ export interface FrameStripFigure {
   frameDataUrls: string[];
   caption: string;
   quote: string;
+  /** Public permalink to the featured ad, when the provider has one. */
+  adUrl: string | null;
 }
 
 /** The literal supercut: hook frames from exemplar ads, side by side, with
- * the spoken hook underneath. Evidence sits next to the claim it supports. */
+ * the spoken hook underneath and a link out to the featured creative.
+ * Evidence sits next to the claim it supports. */
 export function frameStrip(figures: FrameStripFigure[]): string {
   return figures
     .map((figure) => {
@@ -54,9 +57,15 @@ export function frameStrip(figures: FrameStripFigure[]): string {
       const caption = figure.quote
         ? `<q>${escapeHtml(figure.quote)}</q> — ${escapeHtml(figure.caption)}`
         : escapeHtml(figure.caption);
-      return `<div class="strip"><figure>${images}<figcaption>${caption}</figcaption></figure></div>`;
+      const link = figure.adUrl ? ` · ${externalLink(figure.adUrl, "watch the ad")}` : "";
+      return `<div class="strip"><figure>${images}<figcaption>${caption}${link}</figcaption></figure></div>`;
     })
     .join("");
+}
+
+/** Links in a report open in a new tab — readers are mid-document. */
+export function externalLink(url: string, label: string): string {
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(label)}</a>`;
 }
 
 export function banner(text: string): string {

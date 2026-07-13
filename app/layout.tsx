@@ -14,8 +14,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen bg-stone-50 text-stone-900 antialiased">
-        <header className="border-b border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-3xl items-baseline gap-3 px-6 py-4">
+        {/* Fixed header height so full-page views can size against it. */}
+        <header className="h-14 border-b border-stone-200 bg-white">
+          <div className="flex h-full items-center gap-3 px-6">
             <Link href="/" className="text-lg font-bold tracking-tight">
               Supercut
             </Link>
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </span>
           </div>
         </header>
-        <main className="mx-auto max-w-3xl px-6 py-10">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );

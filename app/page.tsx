@@ -20,7 +20,7 @@ function listPlaybooks(): string[] {
 export default function HomePage() {
   const playbooks = listPlaybooks();
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-3xl space-y-10 px-6 py-10">
       <section>
         <h1 className="text-3xl font-bold tracking-tight">Type a market. Get the playbook.</h1>
         <p className="mt-3 max-w-xl text-stone-600">
