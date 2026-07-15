@@ -97,6 +97,5 @@ was built with an AI coding agent doing the implementation, with the design,
 architecture rules, and quality bar specified up front and enforced by review,
 plus recon runs against the live APIs before the pipeline was written.
 
-Built for the NewForm take-home. Depth lives in
 [docs/architecture.md](docs/architecture.md) (what and where) and
 [docs/decisions.md](docs/decisions.md) (why)
