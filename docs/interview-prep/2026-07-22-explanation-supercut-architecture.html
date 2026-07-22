@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supercut — Deep Architecture Briefing for Interview Prep</title>
+<style>
+  :root {
+    --ink: #1c1917;
+    --muted: #57534e;
+    --line: #e7e5e4;
+    --wash: #fafaf9;
+    --paper: #ffffff;
+    --accent: #0f766e;
+    --accent-soft: #ccfbf1;
+    --warn: #9a3412;
+    --warn-soft: #ffedd5;
+    --ok: #166534;
+    --ok-soft: #dcfce7;
+    --code-bg: #1c1917;
+    --code-fg: #f5f5f4;
+    --callout-bg: #f0fdfa;
+    --diagram-bg: #f5f5f4;
+    --shadow: 0 1px 2px rgba(28, 25, 23, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, #f5f5f4 0%, var(--wash) 240px);
+    line-height: 1.65;
+    font-size: 18px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 40px 22px 120px; }
+  header.hero {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.15;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+  }
+  .lede { font-size: 1.15rem; color: var(--muted); margin: 0; max-width: 62ch; }
+  nav.toc {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 28px 0 48px;
+    box-shadow: var(--shadow);
+  }
+  nav.toc h2 {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  nav.toc ol { margin: 0; padding-left: 22px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  nav.toc a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+  section { margin: 56px 0; }
+  h2 {
+    font-size: 1.85rem;
+    line-height: 1.2;
+    margin: 0 0 16px;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: 1.25rem;
+    margin: 32px 0 12px;
+  }
+  h4 {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 28px 0 10px;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol { max-width: 68ch; margin: 0 0 16px; padding-left: 22px; }
+  li { margin: 6px 0; }
+  a { color: var(--accent); }
+  .callout {
+    background: var(--callout-bg);
+    border-left: 4px solid var(--accent);
+    padding: 14px 16px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout.warn {
+    background: var(--warn-soft);
+    border-left-color: var(--warn);
+  }
+  .callout strong, .callout .label {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--accent);
+  }
+  .callout.warn .label { color: var(--warn); }
+  .diagram {
+    background: var(--diagram-bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 22px 0;
+    overflow-x: auto;
+  }
+  .diagram .caption {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 14px;
+  }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .flow-step {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 110px;
+    flex: 1;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .flow-step .who {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .flow-step.ai { border-color: #99f6e4; background: #f0fdfa; }
+  .flow-step.code { border-color: #d6d3d1; }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--muted);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 18px;
+    padding: 0 2px;
+  }
+  .toy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .toy-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 13px;
+  }
+  .toy-card .tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .tag.admit { background: var(--ok-soft); color: var(--ok); }
+  .tag.reject { background: #fee2e2; color: #991b1b; }
+  .tag.keep { background: var(--accent-soft); color: var(--accent); }
+  .tag.skip { background: #e7e5e4; color: #44403c; }
+  .toy-card .brand { font-weight: 700; margin-bottom: 4px; }
+  .toy-card .meta { color: var(--muted); font-size: 12px; }
+  .ui-mock {
+    background: #faf8f5;
+    border: 1px solid #e5e2dc;
+    border-radius: 10px;
+    padding: 22px;
+    font-family: Georgia, serif;
+    max-width: 520px;
+  }
+  .ui-mock .kicker {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #b4552d;
+  }
+  .ui-mock h5 {
+    font-size: 28px;
+    margin: 6px 0 8px;
+    font-weight: 700;
+  }
+  .ui-mock .statline {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    border-top: 1px solid #e5e2dc;
+    padding: 10px 0;
+    font-size: 15px;
+  }
+  .ui-mock .num {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #b4552d;
+  }
+  .layers {
+    display: grid;
+    gap: 8px;
+  }
+  .layer {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 13px;
+  }
+  .layer .name {
+    font-weight: 700;
+    color: var(--accent);
+  }
+  pre, .codeblock {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    background: #eee;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  table.cmp {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 14px;
+    margin: 18px 0;
+  }
+  table.cmp th, table.cmp td {
+    text-align: left;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.cmp th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .quiz-q {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 22px 0;
+    box-shadow: var(--shadow);
+  }
+  .quiz-q h3 { margin-top: 0; font-size: 1.15rem; }
+  .quiz-options { display: grid; gap: 8px; margin-top: 14px; }
+  .quiz-options button {
+    text-align: left;
+    font: inherit;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--wash);
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .quiz-options button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+  .quiz-options button:disabled { cursor: default; }
+  .quiz-options button.correct { background: var(--ok-soft); border-color: var(--ok); }
+  .quiz-options button.wrong { background: #fee2e2; border-color: #991b1b; }
+  .feedback {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--ok-soft); color: var(--ok); }
+  .feedback.bad { background: #fee2e2; color: #991b1b; }
+  .scoreboard {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(250, 250, 249, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+    margin: -8px 0 24px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer.note {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .layer { grid-template-columns: 1fr; }
+    .flow-arrow { width: 100%; justify-content: center; transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Interview briefing · NewForm · Supercut</p>
+  <h1>Why this system is shaped the way it is</h1>
+  <p class="lede">
+    A deep architectural walkthrough of Supercut — the market-to-playbook pipeline —
+    written so you can defend every major choice in a mid-to-senior interview:
+    what AI is allowed to do, what code owns, where honesty lives, and which
+    tempting products were deliberately cut.
+  </p>
+</header>
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#background">Background</a>
+      <ol>
+        <li><a href="#bg-deep">The problem this product exists for</a></li>
+        <li><a href="#bg-narrow">The architectural rule of the house</a></li>
+      </ol>
+    </li>
+    <li><a href="#intuition">Intuition</a>
+      <ol>
+        <li><a href="#int-funnel">A toy market walkthrough</a></li>
+        <li><a href="#int-trust">Where trust comes from</a></li>
+        <li><a href="#int-score">Why engagement is a rate</a></li>
+      </ol>
+    </li>
+    <li><a href="#code">Code walkthrough</a>
+      <ol>
+        <li><a href="#code-map">Stage map and ownership</a></li>
+        <li><a href="#code-ingest">Ingest, triage, watch</a></li>
+        <li><a href="#code-count">Dedupe, gate, tally, QA</a></li>
+        <li><a href="#code-prose">Explain, brief, render, app</a></li>
+        <li><a href="#code-decisions">Decisions you should be ready to defend</a></li>
+      </ol>
+    </li>
+    <li><a href="#quiz">Quiz — interviewer depth</a></li>
+  </ol>
+</nav>
+
+<!-- ===================== BACKGROUND ===================== -->
+<section id="background">
+  <h2>Background</h2>
+
+  <h3 id="bg-deep">The problem this product exists for</h3>
+  <p>
+    Creative strategists and founders who sell physical products on paid social
+    face a familiar trap. The ad library is full of noise. Engagement sorts reward
+    big budgets and viral accidents. “Winning ads” lists are opaque. And if you
+    hand a pile of creatives to a large language model and ask “what’s working?”,
+    you get confident prose that cannot be audited — numbers with no receipts,
+    patterns invented across ads the model was never asked to measure.
+  </p>
+  <p>
+    Supercut’s answer is a single document: a self-contained HTML playbook for one
+    market (coffee, protein powder, …). The document shows format chapters with
+    counted patterns, hook-frame strips pulled from the ads themselves, and three
+    tests to run next — each with a draft script. It is built for someone who needs
+    to brief a shoot tomorrow, not someone who wants a dashboard.
+  </p>
+  <p>
+    The product thesis is deliberately narrow. Longevity is an <em>admission filter</em>,
+    not a verdict. Advertisers kill losing creative quickly, so an ad that has been
+    delivering for 30+ days and was seen in the last 30 has earned study. The search
+    also includes the market’s heaviest spenders, so “still delivering” means real
+    money kept backing the ad — not merely that it lingered. No single ad is ever
+    called a winner. Conclusions come only from counting regularities across the
+    admitted pool (“34 of 39 ads show the product in the first 3 seconds”).
+  </p>
+
+  <div class="diagram">
+    <div class="ui-mock">
+      <div class="kicker">Supercut · creative playbook</div>
+      <h5>coffee</h5>
+      <p style="color:#6b6b6b;margin:0 0 10px;font-size:15px;">What the longest-running paid social video ads keep doing — counted, with footage.</p>
+      <p style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#6b6b6b;margin:0 0 14px;">2026-07-13 · 58 ads studied across 45 brands</p>
+      <div class="statline"><span class="num">51 <span style="font-size:14px;color:#6b6b6b;">of 58</span></span><span>Show the product in the first three seconds.</span></div>
+      <div class="statline"><span class="num">58 <span style="font-size:14px;color:#6b6b6b;">of 58</span></span><span>Work with the sound off.</span></div>
+    </div>
+    <p class="caption">Simplified playbook UI: brand-level market title, stamp with pool size, and takeaways that are always “N of M” with the count owned by code.</p>
+  </div>
+
+  <p>
+    Skip ahead if you already know the domain. The rest of this background is the
+    narrow architecture you must own in the interview: the one rule that keeps AI
+    from inventing market claims, and the stage boundary that makes every number
+    reproducible from files on disk.
+  </p>
+
+  <h3 id="bg-narrow">The architectural rule of the house</h3>
+  <p>
+    The entire codebase is organized around one sentence, restated in
+    <code>docs/architecture.md</code> and enforced by module boundaries:
+  </p>
+  <div class="callout">
+    <span class="label">The one rule</span>
+    <strong style="display:inline;font-size:inherit;letter-spacing:0;text-transform:none;color:inherit;">
+      AI describes single ads. Code finds the patterns. AI explains the patterns.
+    </strong>
+    The video model never sees two ads at once, so it cannot invent market-level
+    claims. The prose model never sees a video — only counted tallies — so every
+    claim it makes has a count behind it. Everything in between is deterministic
+    TypeScript.
+  </div>
+  <p>
+    That rule is not a slogan. It dictates file ownership. <code>describe.ts</code>
+    may fill a fixed questionnaire for one ad. <code>tally.ts</code> may count
+    answers and attach ad ids as receipts. <code>explain.ts</code> may phrase those
+    counts into chapter prose. Cross the line — hand all the ads to one big “find
+    the patterns” prompt — and the playbook becomes un-auditable. The three-stage
+    cost in code is the price of numbers you can defend.
+  </p>
+
+  <div class="diagram">
+    <div class="layers">
+      <div class="layer"><div class="name">Sources</div><div>PipiSpy adspy list + detail · OpenRouter (Gemini Flash) · ffmpeg / ffprobe · curl downloads</div></div>
+      <div class="layer"><div class="name">Normalize</div><div><code>ad.ts</code> maps provider quirks into a stable <code>Ad</code>. Chinese CTA labels, nullish fields, platform ints stop here.</div></div>
+      <div class="layer"><div class="name">Pipeline</div><div><code>scan.ts</code> orchestrates find → triage → watch → dedupe → gate → tally → qa → explain → render. Thresholds live in <code>constants.ts</code>.</div></div>
+      <div class="layer"><div class="name">Artifacts</div><div><code>data/&lt;market&gt;/</code> holds searches, fact sheets, mechanicals, frames, tallies, progress. Videos are never persisted. Playbooks land in <code>examples/*.html</code>.</div></div>
+      <div class="layer"><div class="name">Surface</div><div>Thin Next.js app: list playbooks, spawn scans, poll progress, generate brand briefs. No job table, no PID tracking.</div></div>
+    </div>
+    <p class="caption">System layers. Provider quirks are quarantined; AI is constrained to schema-validated edges; the strategist-facing surface is deliberately thin.</p>
+  </div>
+
+  <p>
+    Tech stack, stated plainly: Bun for the pipeline, TypeScript strict with
+    <code>noUncheckedIndexedAccess</code>, Zod v4 as the LLM contract / runtime
+    validator / static type (one schema does all three), Next.js 16 + React 19 for
+    the front door, ffmpeg on PATH for mechanical video facts. Deterministic modules
+    are unit-tested with <code>bun test</code>; model calls and live API pulls are
+    not mocked into fake confidence — they are schema-validated and measured in the
+    playbook appendix.
+  </p>
+</section>
+
+<!-- ===================== INTUITION ===================== -->
+<section id="intuition">
+  <h2>Intuition</h2>
+  <p>
+    Before opening files, hold a small toy market in your head. Call it
+    <em>oat milk</em>. Six ads come back from search. Watch what each stage is
+    allowed to know — and what it is forbidden to invent.
+  </p>
+
+  <h3 id="int-funnel">A toy market walkthrough</h3>
+  <div class="diagram">
+    <div class="toy-grid">
+      <div class="toy-card">
+        <span class="tag admit">admitted</span>
+        <div class="brand">Oatly</div>
+        <div class="meta">92 days · seen yesterday · product demo</div>
+        <div class="meta">Fingerprint A · “Pour this over cereal”</div>
+      </div>
+      <div class="toy-card">
+        <span class="tag admit">admitted</span>
+        <div class="brand">Minor Figures</div>
+        <div class="meta">61 days · seen 3d ago · UGC problem-solution</div>
+        <div class="meta">Fingerprint B · “My coffee was chalky until…”</div>
+      </div>
+      <div class="toy-card">
+        <span class="tag reject">gate reject</span>
+        <div class="brand">Guru Co</div>
+        <div class="meta">Caption mentions oat milk</div>
+        <div class="meta">Actually sells: dropshipping course</div>
+      </div>
+      <div class="toy-card">
+        <span class="tag skip">dedupe drop</span>
+        <div class="brand">Oatly (other page)</div>
+        <div class="meta">40 days · same video as top card</div>
+        <div class="meta">Fingerprint ≈ A (1 bit flip)</div>
+      </div>
+      <div class="toy-card">
+        <span class="tag skip">brand cap</span>
+        <div class="brand">Oatly #5</div>
+        <div class="meta">Would be 5th Oatly ad kept</div>
+        <div class="meta">Cap = 4 per brand</div>
+      </div>
+      <div class="toy-card">
+        <span class="tag keep">thin chapter</span>
+        <div class="brand">Califia</div>
+        <div class="meta">Only 2 “before-after” ads</div>
+        <div class="meta">Goes to smallFormats, no chapter</div>
+      </div>
+    </div>
+    <p class="caption">Toy pool. Search admits by longevity+recency; triage only reorders; watch describes one ad at a time; dedupe collapses re-uploads; brand cap prevents Oatly from owning the tallies; gate drops the course; thin formats never become chapters.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="flow">
+      <div class="flow-step code"><span class="who">code + API</span><b>findAds</b><br>6 angles, 30/30 filter, cache by params hash</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step ai"><span class="who">AI · captions</span><b>triage</b><br>order queue only</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step code"><span class="who">ffmpeg + AI</span><b>watchAd</b><br>fingerprint, cuts, frames, questionnaire</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step code"><span class="who">pure code</span><b>dedupe + cap</b><br>same creative → longest-running</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step code"><span class="who">pure code</span><b>gate</b><br>off-market → appendix</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step code"><span class="who">pure code</span><b>tally + qa</b><br>receipts on every count</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step ai"><span class="who">AI · tallies only</span><b>explain</b><br>chapters + 3 tests</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step code"><span class="who">code</span><b>render</b><br>one HTML file</div>
+    </div>
+    <p class="caption">Data flow. Notice the two AI boxes are isolated: one never sees two ads; the other never sees a video.</p>
+  </div>
+
+  <p>
+    Suppose after gate we have 12 oat-milk ads. Tally finds that 9 of 12 put the
+    product on screen in the first 3 seconds. That count object looks like:
+  </p>
+<pre><code>{
+  "label": "first 3 seconds",
+  "count": 9,
+  "adIds": ["a1","a2","a3","a4","a5","a6","a7","a8","a9"]
+}</code></pre>
+  <p>
+    The explain model receives that structure (plus the rest of the tally and a QA
+    report). It is allowed to write: “Show the product in the first three seconds
+    (9 of 12).” It is <em>not</em> allowed to invent “most ads use a yellow logo”
+    — that number does not exist in the tallies. Schema validation and prompting
+    reinforce the constraint; the deeper guarantee is informational: the model
+    simply never receives the videos.
+  </p>
+
+  <h3 id="int-trust">Where trust comes from</h3>
+  <p>
+    Trust in this system is not “we used a good model.” It is a stack of
+    complementary ground truths:
+  </p>
+  <ul>
+    <li><strong>Admission trust:</strong> survival + recency + spend stratum — money kept paying.</li>
+    <li><strong>Description trust:</strong> one ad, fixed schema, coarse time bins (model timestamps drift 2–5s).</li>
+    <li><strong>Mechanical trust:</strong> cut counts and hook frames from ffmpeg, not the model.</li>
+    <li><strong>Pattern trust:</strong> deterministic tallies with ad-id receipts.</li>
+    <li><strong>Honesty trust:</strong> appendix publishes rejections, skips, cut MAE, quote corroboration, CTA discrepancies.</li>
+  </ul>
+  <div class="callout warn">
+    <span class="label">Edge case interviewers love</span>
+    PipiSpy has <em>no live flag</em>. “Still delivering” is a stated proxy:
+    <code>last_put_time</code> within 30 days. Survival says the ad kept earning
+    spend, not that it was profitable. Dead ≠ failed (campaigns end). That is why
+    winners-vs-losers comparison was scoped out — the trustworthy half of the
+    signal is longevity-as-filter, not death-as-failure.
+  </div>
+
+  <h3 id="int-score">Why engagement is a rate</h3>
+  <p>
+    Plays on paid ads are bought. Ranking on raw play counts crowns the biggest
+    budgets. The study score therefore uses
+    <code>(likes + shares × 5) / plays</code>, with a 10,000-play floor so
+    180 likes on 200 plays cannot beat the world. Shares weigh 5× likes because
+    passing a creative on is a deliberate endorsement; a like is a tap. Longevity
+    still leads the weighted sum (0.5 / 0.3 / 0.2 with format confidence), because
+    longevity is the admission thesis. The formula is printed in every playbook
+    footnote so ranking stays inspectable.
+  </p>
+  <div class="diagram">
+    <table class="cmp">
+      <tr><th>Ad</th><th>Days</th><th>Plays</th><th>Likes</th><th>Rate used?</th><th>Intuition</th></tr>
+      <tr><td>Veteran</td><td>180</td><td>50k</td><td>2,500 (5%)</td><td>yes</td><td>Wins on longevity + rate</td></tr>
+      <tr><td>Big budget</td><td>60</td><td>5M</td><td>25k (0.5%)</td><td>yes, but low</td><td>Bought reach, weak resonance</td></tr>
+      <tr><td>Tiny fluke</td><td>60</td><td>200</td><td>180 (90%)</td><td>floored to 0</td><td>Fake-high rate ignored</td></tr>
+      <tr><td>Facebook gap</td><td>120</td><td>0</td><td>0</td><td>0</td><td>Ranks on longevity + label confidence only</td></tr>
+    </table>
+    <p class="caption">Toy study-score cases. Same numbers appear in <code>test/studyScore.test.ts</code>.</p>
+  </div>
+</section>
+
+<!-- ===================== CODE ===================== -->
+<section id="code">
+  <h2>Code</h2>
+  <p>
+    Read the repo in the order the architecture doc recommends:
+    <code>scan.ts</code> → <code>constants.ts</code> → <code>findAds.ts</code> →
+    <code>watchAd.ts</code> → <code>factSheet.ts</code> → <code>tally.ts</code> →
+    <code>render/playbook.ts</code>. What follows is that tour, grouped so you can
+    narrate it out loud.
+  </p>
+
+  <h3 id="code-map">Stage map and ownership</h3>
+  <table class="cmp">
+    <tr><th>Stage</th><th>File</th><th>AI?</th><th>Job</th></tr>
+    <tr><td>entrypoint</td><td><code>scan.ts</code></td><td>—</td><td>Order stages, progress, parallel watch, refuse thin pools</td></tr>
+    <tr><td>findAds</td><td><code>findAds.ts</code></td><td>tiny (sub-keywords)</td><td>Six biased angles + 30/30 admission</td></tr>
+    <tr><td>triage</td><td><code>triage.ts</code></td><td>yes, captions</td><td>Reorder watch queue; never gatekeeps</td></tr>
+    <tr><td>watch</td><td><code>watchAd.ts</code> + <code>media.ts</code> + <code>describe.ts</code></td><td>video model</td><td>Download once; fingerprint, cuts, frames, questionnaire</td></tr>
+    <tr><td>dedupe / cap</td><td><code>dedupe.ts</code></td><td>no</td><td>Collapse re-uploads; max 4 ads/brand</td></tr>
+    <tr><td>gate</td><td><code>gate.ts</code></td><td>no</td><td><code>marketFit === "off-market"</code> → reject with reason</td></tr>
+    <tr><td>tally / qa / score</td><td><code>tally.ts</code>, <code>qa.ts</code>, <code>studyScore.ts</code></td><td>no</td><td>Counts with receipts; measure drift; rank exemplars</td></tr>
+    <tr><td>explain / brief</td><td><code>explain.ts</code>, <code>brief.ts</code></td><td>tallies only</td><td>Prose + brand adaptation</td></tr>
+    <tr><td>render / app</td><td><code>render/*</code>, <code>app/*</code></td><td>—</td><td>Self-contained HTML; thin Next front door</td></tr>
+  </table>
+
+  <div class="callout">
+    <span class="label">Constants as policy</span>
+    Every threshold lives in <code>constants.ts</code> with a prose reason:
+    <code>MIN_DAYS_RUNNING = 30</code>, <code>MAX_ADS_WATCHED = 70</code>,
+    <code>WATCH_CONCURRENCY = 32</code>, <code>SCENE_CUT_THRESHOLD = 0.2</code>
+    (0.4 missed UGC jump cuts on real ads), <code>FACT_SHEET_SCHEMA_VERSION = 4</code>
+    (cache invalidation). In an interview, say: “I don’t bury magic numbers in
+    prompts — policy is code, commented with the recon that justified it.”
+  </div>
+
+  <h3 id="code-ingest">Ingest, triage, watch</h3>
+  <h4>findAds — six biases, one budget</h4>
+  <p>
+    PipiSpy charges 1 credit per result. Failures often return HTTP 200 with
+    <code>success: false</code>, so the client checks the body. <code>sort_type</code>
+    must be the string <code>"desc"</code>. Every raw response is cached under
+    <code>data/&lt;m&gt;/searches/&lt;paramsHash&gt;.json</code>. The recency cutoff
+    rounds to the UTC day so same-day re-runs hit cache.
+  </p>
+  <p>
+    Four sort strata on the broad keyword (engagement, delivery days, last found,
+    ad spend) plus two AI-suggested sub-keyword pulls (keyword type 5) at 40 each
+    = 240 searched ads, exactly <code>MAX_ADS_SEARCHED</code>. For consumer-product
+    markets, <code>data_type: [3]</code> and <code>is_product: true</code> cut games
+    and apps upstream — recon showed ~60% of credits otherwise went to ads the gate
+    would drop. The flag is one constant (<code>CONSUMER_PRODUCT_MARKET</code>), not
+    a provider abstraction: an app market would flip to <code>is_app</code> by hand.
+  </p>
+<pre><code>// findAds.ts — admission restated in code even though the API also filters.
+// Cached responses and provider drift mean you never trust a boundary you can re-check.
+function passesAdmission(ad: Ad, lastSeenAfter: number): boolean {
+  return ad.daysRunning >= MIN_DAYS_RUNNING &amp;&amp; ad.lastSeenAt >= lastSeenAfter;
+}</code></pre>
+
+  <h4>triage — optimization, not authority</h4>
+  <p>
+    First coffee run: 56 watched, 42 rejected, 14 relevant — thin pool. Caption
+    triage (chunks of 50, four parallel calls) sorts likely-on-market first and
+    roughly tripled yield of the same 70-video budget. If a chunk fails, that chunk
+    stays “unsure.” Triage never rejects.
+  </p>
+
+  <h4>watchAd — one download window, then delete</h4>
+  <p>
+    <code>withVideo</code> downloads via curl (Bun’s fetch hung on the CDN;
+    <code>--max-time 120</code> guarantees a stuck download skips one ad). In that
+    window: probe duration, size check (40MB — video goes base64 to the model),
+    average-hash fingerprint of the middle 8×8 gray frame, ffmpeg scene cuts in
+    the first 10s, four hook frames as ~320px webp in <em>one</em> ffmpeg pass,
+    then <code>describeAd</code>. Video deleted in <code>finally</code>.
+  </p>
+  <div class="callout warn">
+    <span class="label">Concurrency hazard you must know</span>
+    Watches run 32-wide. Mechanicals are an in-memory <code>Map</code> loaded once
+    and persisted once after the phase. Thirty-two tasks doing read-modify-write
+    on one JSON file would corrupt it; thirty-two mutations on one Map on a
+    single-threaded event loop cannot. Progress counters increment in JS between
+    awaits — acceptable for a status bar, not a ledger.
+  </div>
+<pre><code>// openrouter.ts — Zod schema is the contract, the validator, and the type.
+// On validation failure: retry once with the error in the prompt, then throw.
+// Manual AbortController (180s), not AbortSignal.timeout — stuck calls fail one ad, not the scan.</code></pre>
+  <p>
+    The FactSheet questionnaire forces coarse bins for visual timing
+    (<code>first 3 seconds | 3 to 10 seconds | later | never</code>) because the
+    model’s event timestamps drift. It asks <code>marketFit</code> so the gate has
+    something deterministic to decide on. <code>estimatedCutsFirst10s</code> is kept
+    only for QA against ffmpeg — chapters print the measured cuts.
+  </p>
+
+  <h3 id="code-count">Dedupe, gate, tally, QA</h3>
+  <h4>dedupeCreatives</h4>
+  <p>
+    Same creative often runs under several ad ids and page names. Sort by
+    longevity descending; keep a candidate unless an already-kept fingerprint
+    matches: identical sha256, or duration within 1.5s and perceptual hash Hamming
+    distance ≤ 5 bits of 64. Then <code>capPerBrand(..., 4)</code> again prefers
+    longest-running.
+  </p>
+  <h4>gate</h4>
+  <p>
+    Ten lines that earn their keep. Recon: top engagement result for “coffee” was
+    a lip-balm ad whose transcript mentioned coffee. Adjacent products stay
+    (segments can break them out); off-market is rejected with
+    <code>off-market: sells "…"</code> into the appendix.
+  </p>
+  <h4>tally</h4>
+  <p>
+    Pure functions. Formats below <code>MIN_ADS_FOR_CHAPTER</code> (3) go to
+    <code>smallFormats</code>. Thin chapters (&lt;5) still render but with a banner.
+    Distributions sort by count; video length buckets sort shortest-to-longest.
+    Facebook often lacks duration/plays — those ads drop out of the affected
+    denominator so “N of M” stays honest. Pool size &lt; 10 refuses to write a
+    playbook at all (“counting regularities in a handful of ads is astrology”).
+  </p>
+  <h4>qa</h4>
+  <p>
+    Mean absolute error of model cut estimates vs ffmpeg; share within 2 cuts;
+    low-confidence format ids; spoken-hook word-overlap ≥ 70% against provider ASR
+    (on-screen text hooks are not checkable — ASR can’t see them); CTA discrepancy
+    when model says <code>ctaStyle: "none"</code> but button matches
+    <code>/shop|buy|order|purchase|cart/i</code> (“Learn more” is consistent with soft/no ask).
+  </p>
+
+  <h3 id="code-prose">Explain, brief, render, app</h3>
+  <h4>explain + exemplars in parallel</h4>
+  <p>
+    <code>explainTally</code> sends <code>{ tally, qa }</code> only. Schema demands
+    counted lines with <code>count</code>/<code>total</code> copied from tallies,
+    one chapter per format label in order, exactly three tests. While that call
+    flies, <code>buildExemplarsByFormat</code> scores admitted members (excluding
+    low-confidence labels), picks ≤3 with at most one brand each, embeds frame
+    data URLs, and fetches detail permalinks only for those exemplars —
+    recon showed <code>ad_fee</code> was <code>play_count/1000</code> on 30/33
+    samples, so “estimated spend” is never printed.
+  </p>
+  <h4>render</h4>
+  <p>
+    String-assembled HTML with inlined CSS and base64 webps — readable from
+    <code>file://</code>, email, or print. Numbers come from <code>Tally</code>;
+    prose sits beside counts. Rare segment labels (&lt;2 ads) bundle into
+    “N one-off segments.” Coffee example: ~0.9MB, 58 ads / 45 brands, product-demo
+    chapter entirely on Facebook in that snapshot.
+  </p>
+  <h4>app</h4>
+  <p>
+    <code>POST /api/scan</code> spawns <code>bun run src/scan.ts &lt;slug&gt;</code>
+    detached and unrefs; progress is a JSON file polled every 3s. If a scan is
+    already running for that market, return the slug and watch it. Delete refuses
+    while running (409). <code>marketSlug</code> strips to <code>[a-z0-9-]</code>
+    so paths cannot escape <code>data/</code> or <code>examples/</code>. Briefs read
+    <code>tallies.json</code> and rewrite the three tests for one brand — still
+    tally-bound.
+  </p>
+
+  <h3 id="code-decisions">Decisions you should be ready to defend</h3>
+  <p>
+    These are the answers that separate “I built a pipeline” from “I made product
+    and epistemology choices.” Practice saying them in your own words.
+  </p>
+  <ol>
+    <li>
+      <strong>Why not one big “find patterns” prompt?</strong>
+      Fast to build, impossible to audit, invents market claims. Three stages cost
+      code; every number becomes reproducible from questionnaires on disk.
+    </li>
+    <li>
+      <strong>Why longevity, not plays?</strong>
+      Plays measure budget. Survival is what advertisers pay for with their own
+      money. Combined with the spend sort stratum: “ran a long time with real money
+      behind it.” Still: conclusions only from pool regularities.
+    </li>
+    <li>
+      <strong>Why keep the gate after API pre-filters?</strong>
+      Pre-filters remove games/apps; the gate still catches e-commerce that sells
+      the wrong product (coffee tables in a coffee scan). Defense in depth; noise
+      becomes a measured appendix row instead of silent contamination.
+    </li>
+    <li>
+      <strong>Why no zombie cap on delivery days?</strong>
+      A 900-day survivor seen in the last 30 is what’s working now — it just
+      started long ago. Median days live per chapter makes veteran weight visible.
+    </li>
+    <li>
+      <strong>Why cut Meta reach / advertiser-anchored scans?</strong>
+      Verified against the API, then cut. Reach is a second data model that won’t
+      compare cleanly with play-count rows inside one document. Advertiser spine is
+      a different product (competitor intel). One consistent weaker metric beats two
+      inconsistent strong ones.
+    </li>
+    <li>
+      <strong>Why not a whitespace finder?</strong>
+      “Nobody does X” needs census coverage; a gap can mean “tried and died.” The
+      playbook may observe rarity with a count; it does not advise charging into a gap.
+    </li>
+    <li>
+      <strong>Why transient videos?</strong>
+      Not ours to store; no analytical gain once frames, mechanicals, and fact
+      sheets exist. Derived artifacts are small and versioned by schema/threshold.
+    </li>
+    <li>
+      <strong>Why a thin app?</strong>
+      One document a strategist can act on beats a chat + scoring dashboard + asset
+      generator half-done. Progress-via-file is enough for one scan per market.
+    </li>
+  </ol>
+
+  <div class="callout">
+    <span class="label">Concrete coffee numbers to cite</span>
+    Shipped example: 58 ads studied across 45 brands; 8 off-market rejects; 51/58
+    show product in first 3s; 58/58 work muted; product-demo chapter 28 ads, all
+    Facebook in that run, median ~203.5 days live; brewing equipment is 40/58 of
+    segments — adjacent gear dominates, which is why adjacent is admitted and
+    segmented rather than dropped.
+  </div>
+
+<pre><code>// Mental model of scan.ts control flow (simplified)
+candidates = findAds(market)                    // cached PipiSpy angles
+ordered    = triageByMetadata(market, candidates)
+toWatch    = ordered.slice(0, MAX_ADS_WATCHED)  // 70
+outcomes   = mapWithConcurrency(toWatch, 32, watchAd)
+unique     = dedupeCreatives(watched)
+capped     = capPerBrand(unique, 4)
+pool       = applyRelevanceGate each → admitted
+if pool.length &lt; 10: fail honestly
+tally, qa  = buildTally(pool), buildQaReport(pool)
+exemplars  = buildExemplarsByFormat(...)        // parallel with:
+prose      = explainTally(market, tally, qa)    // tallies only
+html       = renderPlaybook(...); write examples/&lt;slug&gt;.html</code></pre>
+</section>
+
+<!-- ===================== QUIZ ===================== -->
+<section id="quiz">
+  <h2>Quiz — interviewer depth</h2>
+  <p>
+    Eight questions at the level of a probing mid/senior interview. They are not
+    trivia about file names; they test whether you understand the constraints that
+    shaped the system. Click an answer for feedback.
+  </p>
+  <div class="scoreboard" id="scoreboard">Score: <span id="score">0</span> / <span id="total">0</span> answered</div>
+
+  <div class="quiz-q" data-answer="1">
+    <h3>1. Isolation of AI roles</h3>
+    <p>
+      An interviewer asks: “Couldn’t you just send all the admitted videos to one
+      model and ask for patterns with citations?” Which answer best captures why
+      Supercut refuses that design?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">It would be too expensive at current OpenRouter prices for 70 videos.</button>
+      <button data-i="1">The pattern-finding model would see multiple ads at once and could invent market-level claims that are not grounded in countable, per-ad answers — breaking auditability even if the prose sounds cited.</button>
+      <button data-i="2">Gemini Flash cannot accept more than one video URL part per request.</button>
+      <button data-i="3">PipiSpy’s TOS forbids sending more than one creative to a third-party model.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. Cost and API limits are real, but the architectural reason is epistemological: describe→tally→explain separates perception from aggregation so every number is reproducible from FactSheets on disk." data-bad="Not the core reason. The load-bearing constraint is that market claims must come from deterministic tallies over single-ad questionnaires, not from a model that saw the whole pool."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="2">
+    <h3>2. Triage vs gate</h3>
+    <p>
+      After caption triage marks an ad “unlikely,” what does the pipeline do, and why?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">Drop it immediately to save watch credits — triage is the relevance gate.</button>
+      <button data-i="1">Send it to a cheaper image-only model for a second opinion before watch.</button>
+      <button data-i="2">Keep it in the candidate list but sort it later in the watch queue; only the video questionnaire + gate can reject, because captions leak and triage must never be a gatekeeper.</button>
+      <button data-i="3">Require two “unlikely” votes across chunks before exclusion.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. Triage is explicitly an optimization for watch-budget yield. Failures fall back to neutral order. The real gate reads marketFit from the watched FactSheet." data-bad="Triage only reorders. Rejecting from captions would reintroduce the exact failure mode that made the gate necessary (keyword/caption leakage)."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="1">
+    <h3>3. Concurrent mechanicals cache</h3>
+    <p>
+      Why is <code>mechanicals.json</code> loaded into an in-memory Map for the watch
+      phase instead of each worker reading and writing the file?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">JSON.parse is too slow at 32-way concurrency on Bun.</button>
+      <button data-i="1">Concurrent read-modify-write on one file would race and corrupt the cache; a shared Map mutated on a single-threaded event loop between awaits is safe for this workload, then persisted once.</button>
+      <button data-i="2">The Map is required for the study score to normalize longevity across the pool.</button>
+      <button data-i="3">PipiSpy rate limits file-backed caches differently from memory caches.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. This is a classic “parallelize the network-bound stage, serialize the shared mutable artifact” move. Documented in decisions.md under watch concurrency." data-bad="The issue is cache corruption under concurrent RMW, not parse speed or provider rate limits. Study score runs after watch on the admitted pool."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="0">
+    <h3>4. Engagement as a rate</h3>
+    <p>
+      Ad A: 180 likes, 200 plays, 60 days. Ad B: 2,000 likes, 100,000 plays, 60 days.
+      Same format confidence. Who ranks higher on engagement component, and why?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">B — A is below MIN_PLAYS_FOR_ENGAGEMENT_RATE (10k), so its rate is treated as 0 despite a flashy 90% like ratio; B’s rate is real.</button>
+      <button data-i="1">A — 90% like rate dominates any large-denominator ad.</button>
+      <button data-i="2">Tie — engagement weight is zeroed whenever longevity is equal.</button>
+      <button data-i="3">A — shares are missing, and the scorer falls back to likes/plays without a floor.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. The floor exists specifically to stop tiny-denominator fireworks. This is covered in studyScore tests (“tiny denominators do not produce fake-high rates”)." data-bad="Re-read engagementRate: below 10k plays returns 0. Raw like rate is never used without that floor."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="3">
+    <h3>5. Detail endpoint and fake precision</h3>
+    <p>
+      Why does Supercut fetch <code>adspy/detail</code> only for exemplar ads, and
+      why is <code>ad_fee</code> unused even though it looks like spend?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">Detail is always paid, so it is reserved for the three test scripts.</button>
+      <button data-i="1">Detail returns Meta reach, which would break play-count tallies if mixed in.</button>
+      <button data-i="2">Exemplars need higher-resolution frames; detail is the frame CDN.</button>
+      <button data-i="3">The only list-missing field the playbook can honestly use is the public permalink (<code>url</code>). Recon found <code>ad_fee ≈ play_count/1000</code> on most samples — printing it as spend would be fake precision — and tallies don’t need detail at all.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. Free within 3 days of the list pull, cached forever; permalink is the strongest receipt for the handful of ads shown as examples." data-bad="Detail is not the frame source, and Meta reach is a different endpoint that was scoped out entirely. The key recon finding is ad_fee as a formula, plus permalink-as-receipt."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="2">
+    <h3>6. Coarse time bins</h3>
+    <p>
+      Why does the FactSheet ask when the product appears as an enum of bins rather
+      than a float timestamp?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">OpenRouter’s json_schema mode cannot emit numbers safely.</button>
+      <button data-i="1">Strategists only care about first-frame product shots, so later timing is discarded.</button>
+      <button data-i="2">The video model’s visual-event timestamps drift ~2–5 seconds in practice; second-precise claims would be fake precision, while first-3s / 3–10s / later still match the scroll-stop decisions strategists make. Precise cut counts come from ffmpeg instead.</button>
+      <button data-i="3">Bins compress the tally cardinality so explain prompts fit in context.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. Pair this with SCENE_CUT_THRESHOLD recon: mechanical precision from ffmpeg, semantic timing from coarse model bins." data-bad="Zod/OpenRouter handle numbers fine. The issue is measured model drift vs the decisions a strategist actually makes with timing."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="1">
+    <h3>7. What was verified then cut</h3>
+    <p>
+      You are asked why the playbook does not mix PipiSpy Meta Ad Library reach
+      (<code>ad_audience_reach</code>, <code>active_days</code>) into the same tallies
+      as TikTok play counts, even though reach is “stronger.” Best answer?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">Reach data is illegal to store under Meta’s terms for this use case.</button>
+      <button data-i="1">It is a second data model; mixing reach rows with plays rows would quietly break pool-wide comparisons. One consistent weaker metric inside a single document beats two inconsistent stronger ones.</button>
+      <button data-i="2">Reach is only available for ads younger than 30 days, so it conflicts with the admission filter.</button>
+      <button data-i="3">OpenRouter refuses to explain tallies that include Meta fields.</button>
+    </div>
+    <div class="feedback" data-ok="Correct — straight from decisions.md. Same family of answer as cutting advertiser-anchored scans: valuable, verified, different product / consistency hazard." data-bad="The cut is about metric commensurability inside one pooled document, not legality or model refusals."></div>
+  </div>
+
+  <div class="quiz-q" data-answer="0">
+    <h3>8. Failure modes and honesty</h3>
+    <p>
+      A watched ad’s CDN URL is dead. What should the user-facing playbook show,
+      and what must not happen?
+    </p>
+    <div class="quiz-options">
+      <button data-i="0">The scan continues; the ad appears in the appendix skips with a plain-language reason (“video is no longer available…”); technical curl/ffmpeg detail stays in the scan log. The run must not abort the whole market.</button>
+      <button data-i="1">The scan fails immediately — missing media means the pool is corrupted.</button>
+      <button data-i="2">The ad is admitted with an empty FactSheet so denominators stay aligned with searched counts.</button>
+      <button data-i="3">Triage is re-run to replace the slot with the next “likely” candidate mid-flight.</button>
+    </div>
+    <div class="feedback" data-ok="Correct. watchAd catches errors per ad; plainSkipReason translates tool failures for strategists; appendix is the honesty surface. Empty FactSheets would poison tallies." data-bad="Per-ad failure must not kill the market scan, and you never invent FactSheets. Replacement mid-flight isn’t implemented — skips are reported."></div>
+  </div>
+</section>
+
+<footer class="note">
+  Generated for interview prep · Supercut architecture · 2026-07-22<br>
+  Primary sources: <code>README.md</code>, <code>docs/architecture.md</code>,
+  <code>docs/decisions.md</code>, and the <code>src/</code> / <code>app/</code> modules themselves.<br>
+  Open this file in a browser: <code>/tmp/2026-07-22-explanation-supercut-architecture.html</code>
+</footer>
+
+</div>
+<script>
+(function () {
+  const questions = document.querySelectorAll(".quiz-q");
+  const scoreEl = document.getElementById("score");
+  const totalEl = document.getElementById("total");
+  let answered = 0;
+  let correct = 0;
+  totalEl.textContent = "0";
+
+  questions.forEach((q) => {
+    const answer = Number(q.dataset.answer);
+    const buttons = q.querySelectorAll(".quiz-options button");
+    const feedback = q.querySelector(".feedback");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (q.dataset.locked === "1") return;
+        q.dataset.locked = "1";
+        const i = Number(btn.dataset.i);
+        const ok = i === answer;
+        buttons.forEach((b) => {
+          b.disabled = true;
+          if (Number(b.dataset.i) === answer) b.classList.add("correct");
+        });
+        if (!ok) btn.classList.add("wrong");
+        feedback.textContent = ok ? feedback.dataset.ok : feedback.dataset.bad;
+        feedback.classList.add("show", ok ? "ok" : "bad");
+        answered += 1;
+        if (ok) correct += 1;
+        scoreEl.textContent = String(correct);
+        totalEl.textContent = String(answered);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
